@@ -22,11 +22,13 @@ package com.github.gumtreediff.matchers.optimal.rted;
 
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
+import com.github.gumtreediff.matchers.Register;
 import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.tree.TreeUtils;
 
 import java.util.List;
 
+@Register(id = "rted")
 public class RtedMatcher extends Matcher {
 
     public RtedMatcher(ITree src, ITree dst, MappingStore store) {

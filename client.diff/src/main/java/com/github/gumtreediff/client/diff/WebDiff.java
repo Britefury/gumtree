@@ -62,7 +62,7 @@ public class WebDiff extends AbstractDiffClient<WebDiff.Options> {
 
     @Override
     public void run() {
-        DiffServer server = new DiffServer(opts.src, opts.dst, opts.defaultPort);
+        DiffServer server = new DiffServer(opts.src, opts.dst, opts.defaultPort, opts.matcher);
         System.out.println(String.format("Starting server: %s", "http://127.0.0.1:" + opts.defaultPort));
         ServerRunner.executeInstance(server);
     }

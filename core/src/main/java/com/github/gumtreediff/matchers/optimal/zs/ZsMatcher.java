@@ -20,8 +20,7 @@
 
 package com.github.gumtreediff.matchers.optimal.zs;
 
-import com.github.gumtreediff.matchers.MappingStore;
-import com.github.gumtreediff.matchers.Matcher;
+import com.github.gumtreediff.matchers.*;
 import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
@@ -33,6 +32,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+@Register(id = "zs")
 public class ZsMatcher extends Matcher {
 
     private ZsTree src;

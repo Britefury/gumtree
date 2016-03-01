@@ -44,12 +44,15 @@ public class DiffView implements Renderable {
 
     private File fDst;
 
-    public DiffView(File fSrc, File fDst) throws IOException {
+    public DiffView(File fSrc, File fDst, String matcherName) throws IOException {
         this.fSrc = fSrc;
         this.fDst = fDst;
         TreeContext src = Generators.getInstance().getTree(fSrc.getAbsolutePath());
         TreeContext dst = Generators.getInstance().getTree(fDst.getAbsolutePath());
-        Matcher matcher = Matchers.getInstance().getMatcher(src.getRoot(), dst.getRoot());
+        Matcher matcher = Matchers.getInstance().getMatcher(matcherName, src.getRoot(), dst.getRoot());
+        if (matcher == null) {
+            matcher = Matchers.getInstance().getMatcher(src.getRoot(), dst.getRoot());
+        }
         matcher.match();
         diffs = new HtmlDiffs(fSrc, fDst, src, dst, matcher);
         diffs.produce();
