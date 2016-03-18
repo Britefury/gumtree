@@ -23,6 +23,7 @@ package com.github.gumtreediff.matchers;
 import com.github.gumtreediff.gen.Registry;
 import com.github.gumtreediff.gen.Registry;
 import com.github.gumtreediff.matchers.heuristic.LcsMatcher;
+import com.github.gumtreediff.matchers.optimal.MemoisedMatcher;
 import com.github.gumtreediff.matchers.optimal.rted.RtedMatcher;
 import com.github.gumtreediff.matchers.optimal.zs.ZsMatcher;
 import com.github.gumtreediff.tree.ITree;
@@ -46,6 +47,7 @@ public class Matchers extends Registry.NamedRegistry<String, Matcher, Register> 
         install(LcsMatcher.class);
         install(RtedMatcher.class);
         install(ZsMatcher.class);
+        install(MemoisedMatcher.class);
     }
 
     private void install(Class<? extends Matcher> clazz) {
