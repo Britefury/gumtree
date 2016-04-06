@@ -49,11 +49,14 @@ public class DiffView implements Renderable {
         this.fDst = fDst;
         TreeContext src = Generators.getInstance().getTree(fSrc.getAbsolutePath());
         TreeContext dst = Generators.getInstance().getTree(fDst.getAbsolutePath());
+        long t1 = System.nanoTime();
         Matcher matcher = Matchers.getInstance().getMatcher(matcherName, src.getRoot(), dst.getRoot());
         if (matcher == null) {
             matcher = Matchers.getInstance().getMatcher(src.getRoot(), dst.getRoot());
         }
         matcher.match();
+        long t2 = System.nanoTime();
+        System.out.println("Diff time: " + ((t2-t1)*1.0e-9) + "s");
         diffs = new HtmlDiffs(fSrc, fDst, src, dst, matcher);
         diffs.produce();
     }
