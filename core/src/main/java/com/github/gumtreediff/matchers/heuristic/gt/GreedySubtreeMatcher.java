@@ -23,6 +23,7 @@ package com.github.gumtreediff.matchers.heuristic.gt;
 import com.github.gumtreediff.matchers.Mapping;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.MultiMappingStore;
+import com.github.gumtreediff.matchers.heuristic.fgp.FingerprintMatchHelper;
 import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.matchers.Mapping;
 import com.github.gumtreediff.matchers.MappingStore;
@@ -32,6 +33,11 @@ import com.github.gumtreediff.tree.ITree;
 import java.util.*;
 
 public class GreedySubtreeMatcher extends SubtreeMatcher {
+    FingerprintMatchHelper helper;
+
+    public void setHelper(FingerprintMatchHelper h) {
+        this.helper = h;
+    }
 
     public GreedySubtreeMatcher(ITree src, ITree dst, MappingStore store) {
         super(src, dst, store);
@@ -105,16 +111,21 @@ public class GreedySubtreeMatcher extends SubtreeMatcher {
         }
 
         protected double sim(ITree src, ITree dst) {
-            double jaccard = jaccardSimilarity(src.getParent(), dst.getParent());
-            int posSrc = (src.isRoot()) ? 0 : src.getParent().getChildPosition(src);
-            int posDst = (dst.isRoot()) ? 0 : dst.getParent().getChildPosition(dst);
-            int maxSrcPos =  (src.isRoot()) ? 1 : src.getParent().getChildren().size();
-            int maxDstPos =  (dst.isRoot()) ? 1 : dst.getParent().getChildren().size();
-            int maxPosDiff = Math.max(maxSrcPos, maxDstPos);
-            double pos = 1D - ((double) Math.abs(posSrc - posDst) / (double) maxPosDiff);
-            double po = 1D - ((double) Math.abs(src.getId() - dst.getId())
-                    / (double) GreedySubtreeMatcher.this.getMaxTreeSize());
-            return 100 * jaccard + 10 * pos + po;
+            if (helper != null) {
+                return helper.scoreMatchContext(src, dst) / 100.0;
+            }
+            else {
+                double jaccard = jaccardSimilarity(src.getParent(), dst.getParent());
+                int posSrc = (src.isRoot()) ? 0 : src.getParent().getChildPosition(src);
+                int posDst = (dst.isRoot()) ? 0 : dst.getParent().getChildPosition(dst);
+                int maxSrcPos =  (src.isRoot()) ? 1 : src.getParent().getChildren().size();
+                int maxDstPos =  (dst.isRoot()) ? 1 : dst.getParent().getChildren().size();
+                int maxPosDiff = Math.max(maxSrcPos, maxDstPos);
+                double pos = 1D - ((double) Math.abs(posSrc - posDst) / (double) maxPosDiff);
+                double po = 1D - ((double) Math.abs(src.getId() - dst.getId())
+                        / (double) GreedySubtreeMatcher.this.getMaxTreeSize());
+                return (100 * jaccard + 10 * pos + po) / 100.0;
+            }
         }
 
         protected double jaccardSimilarity(ITree src, ITree dst) {

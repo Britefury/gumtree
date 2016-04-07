@@ -22,6 +22,7 @@ package com.github.gumtreediff.matchers;
 
 import com.github.gumtreediff.matchers.heuristic.cd.ChangeDistillerBottomUpMatcher;
 import com.github.gumtreediff.matchers.heuristic.cd.ChangeDistillerLeavesMatcher;
+import com.github.gumtreediff.matchers.heuristic.fgp.FingerprintMatchHelper;
 import com.github.gumtreediff.matchers.heuristic.gt.CompleteBottomUpMatcher;
 import com.github.gumtreediff.matchers.heuristic.XyBottomUpMatcher;
 import com.github.gumtreediff.matchers.heuristic.cd.ChangeDistillerBottomUpMatcher;
@@ -35,12 +36,29 @@ import com.github.gumtreediff.tree.ITree;
 public class CompositeMatchers {
     @Register(id = "gumtree", defaultMatcher = true)
     public static class ClassicGumtree extends CompositeMatcher {
-
         public ClassicGumtree(ITree src, ITree dst, MappingStore store) {
             super(src, dst, store, new Matcher[]{
                     new GreedySubtreeMatcher(src, dst, store),
                     new GreedyBottomUpMatcher(src, dst, store)
             });
+        }
+    }
+
+    @Register(id = "gumtree-fg", defaultMatcher = true)
+    public static class GumtreeWithFingerprints extends CompositeMatcher {
+        public GumtreeWithFingerprints(ITree src, ITree dst, MappingStore store) {
+            super(src, dst, store, new Matcher[]{
+                    new GreedySubtreeMatcher(src, dst, store),
+                    new GreedyBottomUpMatcher(src, dst, store)
+            });
+        }
+
+        @Override
+        public void match() {
+            FingerprintMatchHelper helper = new FingerprintMatchHelper(src, dst);
+            ((GreedySubtreeMatcher)matchers[0]).setHelper(helper);
+            ((GreedyBottomUpMatcher)matchers[1]).setHelper(helper);
+            super.match();
         }
     }
 

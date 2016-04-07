@@ -5,11 +5,28 @@ import com.github.gumtreediff.tree.ITree;
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 
 /**
  * Created by Geoff on 06/04/2016.
  */
 public class FGPNode {
+    public static class NodeMapping {
+        private ArrayList<FGPNode> nodeIDToFGPNode = new ArrayList<>();
+
+        void registerNode(ITree srcNode, FGPNode dstNode) {
+            int nodeId = srcNode.getId();
+            for (int i = nodeIDToFGPNode.size(); i <= nodeId; i++) {
+                nodeIDToFGPNode.add(null);
+            }
+            nodeIDToFGPNode.set(nodeId, dstNode);
+        }
+
+        public FGPNode get(ITree srcNode) {
+            return nodeIDToFGPNode.get(srcNode.getId());
+        }
+    }
+
     protected ITree node;
 
     protected FGPNode children[];
@@ -24,15 +41,16 @@ public class FGPNode {
     protected FeatureVector leftTreeFeats = null, rightTreeFeats = null;
 
 
-    public FGPNode(ITree node) {
+    public FGPNode(ITree node, NodeMapping mapping) {
         this.node = node;
+        mapping.registerNode(node, this);
 
         depth = 0;
         subtreeSize = 0;
 
         this.children = new FGPNode[node.getChildren().size()];
         for (int i = 0; i < children.length; i++) {
-            FGPNode childNode = new FGPNode(node.getChild(i));
+            FGPNode childNode = new FGPNode(node.getChild(i), mapping);
             this.children[i] = childNode;
 
             depth = Math.max(depth, childNode.depth);

@@ -42,6 +42,7 @@ public class Matchers extends Registry.NamedRegistry<String, Matcher, Register> 
 
     private Matchers() {
         install(CompositeMatchers.ClassicGumtree.class);
+        install(CompositeMatchers.GumtreeWithFingerprints.class);
         install(CompositeMatchers.CompleteGumtreeMatche.class);
         install(CompositeMatchers.ChangeDistiller.class);
         install(CompositeMatchers.XyMatcher.class);

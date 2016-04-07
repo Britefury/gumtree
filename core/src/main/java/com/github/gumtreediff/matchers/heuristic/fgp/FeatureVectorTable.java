@@ -78,4 +78,17 @@ public class FeatureVectorTable {
             buildNodeFeaturesTopDown(child, fgLeft.add(child.leftSiblingsFeats), fgRight.add(child.rightSiblingsFeats));
         }
     }
+
+
+    public static double scoreMatchContext(FGPNode a, FGPNode b) {
+        return a.leftTreeFeats.jaccardSimilarity(b.leftTreeFeats) +
+                a.rightTreeFeats.jaccardSimilarity(b.rightTreeFeats) +
+                a.leftSiblingsFeats.jaccardSimilarity(b.leftSiblingsFeats) * 10.0 +
+                a.rightSiblingsFeats.jaccardSimilarity(b.rightSiblingsFeats) * 10.0;
+    }
+
+    public static double scoreMatch(FGPNode a, FGPNode b) {
+        return scoreMatchContext(a, b) +
+                a.nodeFeatures.jaccardSimilarity(b.nodeFeatures) * 100.0;
+    }
 }

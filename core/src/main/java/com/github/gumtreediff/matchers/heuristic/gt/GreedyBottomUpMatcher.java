@@ -24,15 +24,13 @@ import com.github.gumtreediff.matchers.Mapping;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
+import com.github.gumtreediff.matchers.heuristic.fgp.FingerprintMatchHelper;
 import com.github.gumtreediff.matchers.optimal.zs.ZsMatcher;
 import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.tree.TreeMap;
 import com.github.gumtreediff.tree.TreeUtils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Match the nodes using a bottom-up approach. It browse the nodes of the source and destination trees
@@ -42,9 +40,21 @@ import java.util.Set;
  */
 public class GreedyBottomUpMatcher extends Matcher {
 
-    private static final double SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.bu.sim", "0.3"));
+    //    private static final double SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.bu.sim", "0.3"));
+    private static double SIM_THRESHOLD;
 
     private static final int SIZE_THRESHOLD = Integer.parseInt(System.getProperty("gumtree.match.bu.size", "1000"));
+
+    static {
+        String simThresh = "0.3";
+        Map<String, String> env = System.getenv();
+        Object val = env.get("BUSIM");
+        if (val != null) {
+            System.out.println("Setting SIM_THRESHOLD from BUSIM");
+            simThresh = (String)val;
+        }
+        SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.bu.sim", simThresh));
+    }
 
     private TreeMap srcIds;
 
@@ -52,6 +62,12 @@ public class GreedyBottomUpMatcher extends Matcher {
 
     public GreedyBottomUpMatcher(ITree src, ITree dst, MappingStore store) {
         super(src, dst, store);
+    }
+
+    FingerprintMatchHelper helper;
+
+    public void setHelper(FingerprintMatchHelper h) {
+        this.helper = h;
     }
 
     public void match() {
@@ -69,7 +85,14 @@ public class GreedyBottomUpMatcher extends Matcher {
                 double max = -1D;
 
                 for (ITree cand: candidates) {
-                    double sim = jaccardSimilarity(t, cand);
+                    double sim;
+                    if (helper != null) {
+                        sim = helper.scoreMatch(t, cand);
+                    }
+                    else {
+                        sim = jaccardSimilarity(t, cand);
+                    }
+//                    double sim = jaccardSimilarity(t, cand);
                     if (sim > max && sim >= SIM_THRESHOLD) {
                         max = sim;
                         best = cand;

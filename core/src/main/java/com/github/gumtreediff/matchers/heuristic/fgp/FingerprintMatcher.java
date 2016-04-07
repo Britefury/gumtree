@@ -19,45 +19,32 @@ public class FingerprintMatcher extends Matcher {
 
     @Override
     public void match() {
-        FGPNode tA = new FGPNode(src);
-        FGPNode tB = new FGPNode(dst);
-
         long t1 = System.nanoTime();
 
-        FeatureVectorTable fv = new FeatureVectorTable();
-        fv.addTree(tA);
-        fv.addTree(tB);
+        FingerprintMatchHelper matchHelper = new FingerprintMatchHelper(src, dst);
+
+        int nTA = matchHelper.fgbTreeA.subtreeSize;
+        int nTB = matchHelper.fgpTreeB.subtreeSize;
 
         long t2 = System.nanoTime();
         double fgTime = (t2 - t1) * 1.0e-9;
 
-        topDownMatch(tA, tB, 0);
+        topDownMatch(matchHelper.fgbTreeA, matchHelper.fgpTreeB, 0);
 
 //        int nTopDown = mappings.asSet().size();
 
         long t3 = System.nanoTime();
         double topDownTime = (t3 - t2) * 1.0e-9;
 
-        bottomUpMatch(tA, tB);
+        bottomUpMatch(matchHelper.fgbTreeA, matchHelper.fgpTreeB);
 
         long t4 = System.nanoTime();
         double bottomUpTime = (t4 - t3) * 1.0e-9;
 
-        System.out.println("Fingerprint generation " + fgTime + "s, top down " + topDownTime + "s, bottom up " + bottomUpTime + "s");
+        System.out.println("Fingerprint generation " + nTA + " x " + nTB + " nodes: " + fgTime + "s, top down " + topDownTime + "s, bottom up " + bottomUpTime + "s");
     }
 
 
-    private static double scoreMatchContext(FGPNode a, FGPNode b) {
-        return a.leftTreeFeats.jaccardSimilarity(b.leftTreeFeats) +
-                a.rightTreeFeats.jaccardSimilarity(b.rightTreeFeats) +
-                a.leftSiblingsFeats.jaccardSimilarity(b.leftSiblingsFeats) * 10.0 +
-                a.rightSiblingsFeats.jaccardSimilarity(b.rightSiblingsFeats) * 10.0;
-    }
-
-    private static double scoreMatch(FGPNode a, FGPNode b) {
-        return scoreMatchContext(a, b) +
-                a.nodeFeatures.jaccardSimilarity(b.nodeFeatures) * 100.0;
-    }
 
 
     private void topDownMatch(FGPNode treeA, FGPNode treeB, int minDepth) {
@@ -122,7 +109,7 @@ public class FingerprintMatcher extends Matcher {
                     ArrayList<ScoredMatch> scoredMatches = new ArrayList<>();
                     for (FGPNode a: pair.nodesA) {
                         for (FGPNode b: pair.nodesB) {
-                            scoredMatches.add(new ScoredMatch(scoreMatchContext(a, b), a, b));
+                            scoredMatches.add(new ScoredMatch(FeatureVectorTable.scoreMatchContext(a, b), a, b));
                         }
                     }
                     scoredMatches.sort(new ScoreMatchComparator());
@@ -178,10 +165,12 @@ public class FingerprintMatcher extends Matcher {
         ArrayList<FGPNode> nodesA = nodesInUnmatchedSubtrees(treeA);
         ArrayList<FGPNode> nodesB = nodesInUnmatchedSubtrees(treeB);
 
+        System.out.println("Fingerprint bottom up match " + nodesA.size() + " x " + nodesB.size());
+
         ArrayList<ScoredMatch> scoredMatches = new ArrayList<>();
         for (FGPNode a: nodesA) {
             for (FGPNode b: nodesB) {
-                scoredMatches.add(new ScoredMatch(scoreMatch(a, b), a, b));
+                scoredMatches.add(new ScoredMatch(FeatureVectorTable.scoreMatch(a, b), a, b));
             }
         }
         scoredMatches.sort(new ScoreMatchComparator());
