@@ -9,21 +9,38 @@ public class FeatureVector {
     private int v[];
     private int sum;
 
-    public FeatureVector(int n) {
-        v = new int[n];
+    public FeatureVector() {
+        v = new int[0];
         sum = 0;
-    }
-
-    public FeatureVector(int v[]) {
-        this.v = new int[v.length];
-        System.arraycopy(v, 0, this.v, 0, v.length);
-        updateSum();
     }
 
     public FeatureVector(FeatureVector b) {
         this.v = new int[b.v.length];
         System.arraycopy(b.v, 0, this.v, 0, b.v.length);
         this.sum = b.sum;
+    }
+
+    private FeatureVector(int v[]) {
+        int size = v.length - 1;
+        while (size >= 0) {
+            if (v[size] != 0) {
+                break;
+            }
+            size--;
+        }
+        if (size < v.length - 1) {
+            this.v = new int[size+1];
+            System.arraycopy(v, 0, this.v, 0, this.v.length);
+        }
+        else {
+            this.v = v;
+        }
+        updateSum();
+    }
+
+    private FeatureVector(int v[], int sum) {
+        this.v = v;
+        this.sum = sum;
     }
 
 
@@ -35,15 +52,21 @@ public class FeatureVector {
     }
 
 
-    public int size() {
-        return v.length;
-    }
-
     public int get(int i) {
-        return this.v[i];
+        if (i < v.length) {
+            return this.v[i];
+        }
+        else {
+            return 0;
+        }
     }
 
     public void set(int i, int x) {
+        if (i >= this.v.length) {
+            int v[] = new int[i+1];
+            System.arraycopy(this.v, 0, v, 0, this.v.length);
+            this.v = v;
+        }
         int d = x - v[i];
         v[i] = x;
         sum += d;
@@ -69,19 +92,18 @@ public class FeatureVector {
 
     public FeatureVector add(FeatureVector b) {
         int common = Math.min(v.length, b.v.length);
-        FeatureVector result = new FeatureVector(Math.max(v.length, b.v.length));
+        int vOut[] = new int[Math.max(v.length, b.v.length)];
         for (int i = 0; i < common; i++) {
-            result.v[i] = this.v[i] + b.v[i];
+            vOut[i] = this.v[i] + b.v[i];
         }
 
         if (common < v.length) {
-            System.arraycopy(v, common, result.v, common, v.length - common);
+            System.arraycopy(v, common, vOut, common, v.length - common);
         }
         else if (common < b.v.length) {
-            System.arraycopy(b.v, common, result.v, common, b.v.length - common);
+            System.arraycopy(b.v, common, vOut, common, b.v.length - common);
         }
-        result.sum = sum + b.sum;
-        return result;
+        return new FeatureVector(vOut, sum + b.sum);
     }
 
     public void accum(FeatureVector b) {
@@ -91,6 +113,7 @@ public class FeatureVector {
                 newV[i] = v[i] + b.v[i];
             }
             System.arraycopy(b.v, v.length, newV, v.length, b.v.length - v.length);
+            v = newV;
         }
         else {
             for (int i = 0; i < b.v.length; i++) {
@@ -102,85 +125,83 @@ public class FeatureVector {
 
     public FeatureVector sub(FeatureVector b) {
         int common = Math.min(v.length, b.v.length);
-        FeatureVector result = new FeatureVector(Math.max(v.length, b.v.length));
+        int vOut[] = new int[Math.max(v.length, b.v.length)];
         for (int i = 0; i < common; i++) {
-            result.v[i] = this.v[i] - b.v[i];
+            vOut[i] = this.v[i] - b.v[i];
         }
 
         if (common < v.length) {
-            System.arraycopy(v, common, result.v, common, v.length - common);
+            System.arraycopy(v, common, vOut, common, v.length - common);
         }
         else if (common < b.v.length) {
             for (int i = common; i < b.v.length; i++) {
-                result.v[i] = -b.v[i];
+                vOut[i] = -b.v[i];
             }
         }
-        result.sum = sum - b.sum;
-        return result;
+        return new FeatureVector(vOut);
     }
 
     public FeatureVector mul(FeatureVector b) {
         int common = Math.min(v.length, b.v.length);
-        FeatureVector result = new FeatureVector(Math.max(v.length, b.v.length));
+        int vOut[] = new int[Math.max(v.length, b.v.length)];
         for (int i = 0; i < common; i++) {
-            result.v[i] = this.v[i] * b.v[i];
+            vOut[i] = this.v[i] * b.v[i];
         }
-        result.updateSum();
-        return result;
+        return new FeatureVector(vOut);
     }
 
     public FeatureVector mul(int b) {
-        FeatureVector result = new FeatureVector(v.length);
-        for (int i = 0; i < v.length; i++) {
-            result.v[i] = this.v[i] * b;
+        if (b == 0) {
+            return new FeatureVector();
         }
-        result.sum = sum * b;
-        return result;
+        else {
+            int vOut[] = new int[v.length];
+            for (int i = 0; i < v.length; i++) {
+                vOut[i] = this.v[i] * b;
+            }
+            return new FeatureVector(vOut, sum * b);
+        }
     }
 
     public FeatureVector intersect(FeatureVector b) {
         int common = Math.min(v.length, b.v.length);
-        FeatureVector result = new FeatureVector(Math.max(v.length, b.v.length));
+        int vOut[] = new int[Math.max(v.length, b.v.length)];
         for (int i = 0; i < common; i++) {
-            result.v[i] = Math.min(this.v[i], b.v[i]);
+            vOut[i] = Math.min(this.v[i], b.v[i]);
         }
-        result.updateSum();
-        return result;
+        return new FeatureVector(vOut);
     }
 
     public FeatureVector union(FeatureVector b) {
         int common = Math.min(v.length, b.v.length);
-        FeatureVector result = new FeatureVector(Math.max(v.length, b.v.length));
+        int vOut[] = new int[Math.max(v.length, b.v.length)];
         for (int i = 0; i < common; i++) {
-            result.v[i] = this.v[i] + b.v[i];
+            vOut[i] = this.v[i] + b.v[i];
         }
 
         if (common < v.length) {
-            System.arraycopy(v, common, result.v, common, v.length - common);
+            System.arraycopy(v, common, vOut, common, v.length - common);
         }
         else if (common < b.v.length) {
-            System.arraycopy(b.v, common, result.v, common, b.v.length - common);
+            System.arraycopy(b.v, common, vOut, common, b.v.length - common);
         }
-        result.sum = sum + b.sum;
-        return result;
+        return new FeatureVector(vOut);
     }
 
     public FeatureVector abs() {
-        FeatureVector result = new FeatureVector(v.length);
+        int vOut[] = new int[v.length];
         for (int i = 0; i < v.length; i++) {
-            result.v[i] = Math.abs(v[i]);
+            vOut[i] = Math.abs(v[i]);
         }
-        result.updateSum();
-        return result;
+        return new FeatureVector(vOut);
     }
 
     public FeatureVector negated() {
-        FeatureVector result = new FeatureVector(v.length);
+        int vOut[] = new int[v.length];
         for (int i = 0; i < v.length; i++) {
-            result.v[i] = -v[i];
+            vOut[i] = -v[i];
         }
-        result.sum = -sum;
-        return result;
+        return new FeatureVector(vOut, -sum);
     }
 
 

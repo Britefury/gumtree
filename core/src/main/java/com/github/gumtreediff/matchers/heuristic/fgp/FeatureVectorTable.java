@@ -10,24 +10,20 @@ public class FeatureVectorTable {
     ArrayList<FeatureVector> featsByIndex = new ArrayList<>();
 
 
-    public FingerprintIndexToNodesTable addTree(FGPNode tree) {
-        FingerprintIndexToNodesTable indexToNodes = new FingerprintIndexToNodesTable();
-        tree.updateFingerprintIndex(fingerprints, indexToNodes);
+    public void addTree(FGPNode tree) {
+        tree.updateFingerprintIndex(fingerprints);
 
         for (int i = featsByIndex.size(); i < fingerprints.size(); i++) {
             featsByIndex.add(null);
         }
 
         buildTreeFeaturesBottomUp(tree);
-        buildNodeFeaturesTopDown(tree, new FeatureVector(fingerprints.size()), new FeatureVector(fingerprints.size()));
-
-        return indexToNodes;
+        buildNodeFeaturesTopDown(tree, new FeatureVector(), new FeatureVector());
     }
 
     private void buildTreeFeaturesBottomUp(FGPNode root) {
-        int n = fingerprints.size();
-        root.leftSiblingsFeats = new FeatureVector(n);
-        root.rightSiblingsFeats = new FeatureVector(n);
+        root.leftSiblingsFeats = new FeatureVector();
+        root.rightSiblingsFeats = new FeatureVector();
         buildNodeFeaturesBottomUp(root);
     }
 
@@ -40,7 +36,7 @@ public class FeatureVectorTable {
         // Compute cumulative features of children and set
         if (node.children.length > 0) {
             FeatureVector cumulativeChildFeats[] = new FeatureVector[node.children.length + 1];
-            cumulativeChildFeats[0] = new FeatureVector(fingerprints.size());
+            cumulativeChildFeats[0] = new FeatureVector();
 
             for (int i = 0; i < node.children.length; i++) {
                 cumulativeChildFeats[i+1] = cumulativeChildFeats[i].add(node.children[i].nodeFeatures);
@@ -59,7 +55,7 @@ public class FeatureVectorTable {
         int fg = node.getFingerprintIndex();
         FeatureVector feats = featsByIndex.get(fg);
         if (feats == null) {
-            feats = new FeatureVector(fingerprints.size());
+            feats = new FeatureVector();
             feats.set(fg, 1);
 
             for (FGPNode child: node.children) {

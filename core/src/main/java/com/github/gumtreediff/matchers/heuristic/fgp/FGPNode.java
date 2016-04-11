@@ -89,13 +89,12 @@ public class FGPNode {
         return shapeSha;
     }
 
-    public void updateFingerprintIndex(FingerprintTable fingerprints, FingerprintIndexToNodesTable indexToNodes) {
+    public void updateFingerprintIndex(FingerprintTable fingerprints) {
         if (fingerprintIndex == -1) {
             for (FGPNode node: children) {
-                node.updateFingerprintIndex(fingerprints, indexToNodes);
+                node.updateFingerprintIndex(fingerprints);
             }
             fingerprintIndex = fingerprints.getIndexForSha(getShapeSha());
-            indexToNodes.addNode(fingerprintIndex, this);
         }
     }
 
