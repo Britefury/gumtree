@@ -38,7 +38,8 @@ public class FGPNode {
     private int fingerprintIndex = -1;
     protected FeatureVector nodeFeatures = null;
     protected FeatureVector leftSiblingsFeats = null, rightSiblingsFeats = null;
-    protected FeatureVector leftTreeFeats = null, rightTreeFeats = null;
+    protected double leftTree, rightTree;
+//    protected FeatureVector leftTreeFeats = null, rightTreeFeats = null;
 
 
     public FGPNode(ITree node, NodeMapping mapping) {

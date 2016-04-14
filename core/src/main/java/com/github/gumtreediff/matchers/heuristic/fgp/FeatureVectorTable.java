@@ -18,7 +18,8 @@ public class FeatureVectorTable {
         }
 
         buildTreeFeaturesBottomUp(tree);
-        buildNodeFeaturesTopDown(tree, new FeatureVector(), new FeatureVector());
+//        buildNodeFeaturesTopDown(tree, new FeatureVector(), new FeatureVector());
+        buildNodeFeaturesTopDown(tree, 0.0, 0.0);
     }
 
     private void buildTreeFeaturesBottomUp(FGPNode root) {
@@ -66,23 +67,41 @@ public class FeatureVectorTable {
         node.nodeFeatures = feats;
     }
 
-    private void buildNodeFeaturesTopDown(FGPNode node, FeatureVector fgLeft, FeatureVector fgRight) {
-        node.leftTreeFeats = fgLeft;
-        node.rightTreeFeats = fgRight;
+    private void buildNodeFeaturesTopDown(FGPNode node, double leftTree, double rightTree) {
+        node.leftTree = leftTree;
+        node.rightTree = rightTree;
 
         for (FGPNode child: node.children) {
-            buildNodeFeaturesTopDown(child, fgLeft.add(child.leftSiblingsFeats), fgRight.add(child.rightSiblingsFeats));
+            buildNodeFeaturesTopDown(child, leftTree + child.leftSiblingsFeats.getSum(),
+                                     rightTree + child.rightSiblingsFeats.getSum());
         }
     }
+//
+//    private void buildNodeFeaturesTopDown(FGPNode node, FeatureVector fgLeft, FeatureVector fgRight) {
+//        node.leftTreeFeats = fgLeft;
+//        node.rightTreeFeats = fgRight;
+//
+//        for (FGPNode child: node.children) {
+//            buildNodeFeaturesTopDown(child, fgLeft.add(child.leftSiblingsFeats), fgRight.add(child.rightSiblingsFeats));
+//        }
+//    }
 
 
     public static double scoreMatchContext(FGPNode a, FGPNode b) {
-        return a.leftTreeFeats.jaccardSimilarity(b.leftTreeFeats) +
-                a.rightTreeFeats.jaccardSimilarity(b.rightTreeFeats) +
+        double leftSim = Math.min(a.leftTree, b.leftTree) / (Math.max(a.leftTree, b.leftTree) + 1.0e-9);
+        double rightSim = Math.min(a.rightTree, b.rightTree) / (Math.max(a.rightTree, b.rightTree) + 1.0e-9);
+        return leftSim + rightSim +
                 a.leftSiblingsFeats.jaccardSimilarity(b.leftSiblingsFeats) * 10.0 +
                 a.rightSiblingsFeats.jaccardSimilarity(b.rightSiblingsFeats) * 10.0;
     }
 
+//    public static double scoreMatchContext(FGPNode a, FGPNode b) {
+//        return a.leftTreeFeats.jaccardSimilarity(b.leftTreeFeats) +
+//                a.rightTreeFeats.jaccardSimilarity(b.rightTreeFeats) +
+//                a.leftSiblingsFeats.jaccardSimilarity(b.leftSiblingsFeats) * 10.0 +
+//                a.rightSiblingsFeats.jaccardSimilarity(b.rightSiblingsFeats) * 10.0;
+//    }
+//
     public static double scoreMatch(FGPNode a, FGPNode b) {
         return scoreMatchContext(a, b) +
                 a.nodeFeatures.jaccardSimilarity(b.nodeFeatures) * 100.0;

@@ -77,7 +77,7 @@ public class FeatureVector {
 
     public int get(int i) {
         int index = Arrays.binarySearch(indices, i);
-        if (index >= 0) {
+        if (index >= 0 && index < values.length) {
             return values[index];
         }
         else {
