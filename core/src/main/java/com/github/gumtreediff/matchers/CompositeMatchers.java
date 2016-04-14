@@ -44,7 +44,7 @@ public class CompositeMatchers {
         }
     }
 
-    @Register(id = "gumtree-fg", defaultMatcher = true)
+    @Register(id = "gumtree-fg")
     public static class GumtreeWithFingerprints extends CompositeMatcher {
         public GumtreeWithFingerprints(ITree src, ITree dst, MappingStore store) {
             super(src, dst, store, new Matcher[]{

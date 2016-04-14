@@ -59,7 +59,7 @@ public class FeatureVectorTable {
             feats.set(fg, 1);
 
             for (FGPNode child: node.children) {
-                feats.accum(child.nodeFeatures);
+                feats = feats.add(child.nodeFeatures);
             }
         }
 
