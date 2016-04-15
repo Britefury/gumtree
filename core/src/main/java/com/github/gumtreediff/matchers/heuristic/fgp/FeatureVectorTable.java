@@ -95,9 +95,9 @@ public class FeatureVectorTable {
     public static double scoreMatchContext(FGPNode a, FGPNode b) {
         double leftSim = Math.min(a.leftTree, b.leftTree) / (Math.max(a.leftTree, b.leftTree) + 1.0e-9);
         double rightSim = Math.min(a.rightTree, b.rightTree) / (Math.max(a.rightTree, b.rightTree) + 1.0e-9);
-        return leftSim + rightSim +
-                a.leftSiblingsFeats.jaccardSimilarity(b.leftSiblingsFeats) * 10.0 +
-                a.rightSiblingsFeats.jaccardSimilarity(b.rightSiblingsFeats) * 10.0;
+        return leftSim * 0.5 + rightSim * 0.5 +
+                a.leftSiblingsFeats.jaccardSimilarity(b.leftSiblingsFeats) * 5.0 +
+                a.rightSiblingsFeats.jaccardSimilarity(b.rightSiblingsFeats) * 5.0;
     }
 
 //    public static double scoreMatchContext(FGPNode a, FGPNode b) {
