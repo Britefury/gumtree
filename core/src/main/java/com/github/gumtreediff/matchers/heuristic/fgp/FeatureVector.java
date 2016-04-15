@@ -180,6 +180,24 @@ public class FeatureVector {
     }
 
 
+    public double[] jaccardSimilarityParts(FeatureVector b) {
+        double intersection = 0.0, union = 0.0;
+        for (int iab[]: pairIter(b)) {
+            intersection += Math.min(iab[1], iab[2]);
+            union += Math.max(iab[1], iab[2]);
+        }
+        if (union == 0.0) {
+            if (intersection != 0.0) {
+                throw new RuntimeException("intersection != 0 && union == 0");
+            }
+            return new double[] {0.0, 0.0};
+        }
+        else {
+            return new double[] {intersection, union};
+        }
+    }
+
+
     public FeatureVector add(FeatureVector b) {
         ArrayList<Integer> ndx = new ArrayList<>();
         ArrayList<Integer> val = new ArrayList<>();

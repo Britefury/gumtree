@@ -1,5 +1,6 @@
 package com.github.gumtreediff.matchers.heuristic.fgp;
 
+import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.tree.ITree;
 
 /**
@@ -27,6 +28,10 @@ public class FingerprintMatchHelper {
     }
 
     public double scoreMatch(ITree a, ITree b) {
-        return FeatureVectorTable.scoreMatch(mappingA.get(a), mappingB.get(b));
+        return FeatureVectorTable.scoreMatch(mappingA.get(a), mappingB.get(b), null, null, null);
+    }
+
+    public double scoreMatch(ITree a, ITree b, MappingStore mappings) {
+        return FeatureVectorTable.scoreMatch(mappingA.get(a), mappingB.get(b), mappingA, mappingB, mappings);
     }
 }

@@ -170,7 +170,7 @@ public class FingerprintMatcher extends Matcher {
         ArrayList<ScoredMatch> scoredMatches = new ArrayList<>();
         for (FGPNode a: nodesA) {
             for (FGPNode b: nodesB) {
-                scoredMatches.add(new ScoredMatch(FeatureVectorTable.scoreMatch(a, b), a, b));
+                scoredMatches.add(new ScoredMatch(FeatureVectorTable.scoreMatch(a, b, null, null, null), a, b));
             }
         }
         scoredMatches.sort(new ScoreMatchComparator());

@@ -87,7 +87,8 @@ public class GreedyBottomUpMatcher extends Matcher {
                 for (ITree cand: candidates) {
                     double sim;
                     if (helper != null) {
-                        sim = helper.scoreMatch(t, cand);
+//                        sim = helper.scoreMatch(t, cand, mappings) / 100.0;
+                        sim = helper.scoreMatch(t, cand) / 100.0;
                     }
                     else {
                         sim = jaccardSimilarity(t, cand);

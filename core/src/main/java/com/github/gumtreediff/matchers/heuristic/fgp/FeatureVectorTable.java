@@ -1,6 +1,11 @@
 package com.github.gumtreediff.matchers.heuristic.fgp;
 
+import com.github.gumtreediff.matchers.MappingStore;
+import com.github.gumtreediff.tree.ITree;
+
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Geoff on 06/04/2016.
@@ -102,8 +107,37 @@ public class FeatureVectorTable {
 //                a.rightSiblingsFeats.jaccardSimilarity(b.rightSiblingsFeats) * 10.0;
 //    }
 //
-    public static double scoreMatch(FGPNode a, FGPNode b) {
+    public static double scoreMatch(FGPNode a, FGPNode b, FGPNode.NodeMapping mappingsA, FGPNode.NodeMapping mappingsB,
+                                    MappingStore mappings) {
+        double jaccard;
+        if (mappingsA == null && mappingsB == null && mappings == null) {
+            jaccard = a.nodeFeatures.jaccardSimilarity(b.nodeFeatures);
+        }
+        else {
+            double jaccardParts[] = a.nodeFeatures.jaccardSimilarityParts(b.nodeFeatures);
+            jaccardParts[0] += matchAdditive(a, b, mappingsA, mappingsB, mappings);
+            jaccard = jaccardParts[1] == 0.0 ? 0.0 : jaccardParts[0] / jaccardParts[1];
+        }
         return scoreMatchContext(a, b) +
-                a.nodeFeatures.jaccardSimilarity(b.nodeFeatures) * 100.0;
+                jaccard * 100.0;
+    }
+
+    private static double matchAdditive(FGPNode a, FGPNode b, FGPNode.NodeMapping mappingsA, FGPNode.NodeMapping mappingsB,
+                                 MappingStore mappings) {
+        Set<ITree> dstDescs = new HashSet<>(b.node.getDescendants());
+        int additive = 0;
+
+        for (ITree t : a.node.getDescendants()) {
+            ITree m = mappings.getDst(t);
+            if (m != null && dstDescs.contains(m)) {
+                FGPNode x = mappingsA.get(t);
+                FGPNode y = mappingsB.get(m);
+                if (x.getFingerprintIndex() != y.getFingerprintIndex()) {
+                    additive++;
+                }
+            }
+        }
+
+        return additive;
     }
 }
