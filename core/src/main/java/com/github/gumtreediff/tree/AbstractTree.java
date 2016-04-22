@@ -295,9 +295,9 @@ public abstract class AbstractTree implements ITree {
     @Override
     public String toPrettyString(TreeContext ctx) {
         if (hasLabel()) {
-            return ctx.getTypeLabel(this) + ": " + getLabel();
+            return ctx.getTypeLabel(this) + ": " + getLabel() + " [" + getHash() + "]";
         } else {
-            return ctx.getTypeLabel(this);
+            return ctx.getTypeLabel(this) + " [" + getHash() + "]";
         }
     }
 

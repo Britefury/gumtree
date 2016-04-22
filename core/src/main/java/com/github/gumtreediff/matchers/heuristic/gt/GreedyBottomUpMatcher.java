@@ -42,18 +42,48 @@ public class GreedyBottomUpMatcher extends Matcher {
 
     //    private static final double SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.bu.sim", "0.3"));
     private static double SIM_THRESHOLD;
+    private static boolean SIM_COMBINE_FG_MATCHES;
 
     private static final int SIZE_THRESHOLD = Integer.parseInt(System.getProperty("gumtree.match.bu.size", "1000"));
 
     static {
         String simThresh = "0.3";
         Map<String, String> env = System.getenv();
-        Object val = env.get("BUSIM");
-        if (val != null) {
-            System.out.println("Setting SIM_THRESHOLD from BUSIM");
-            simThresh = (String)val;
+        Object simThreshVal = env.get("BUSIM");
+        if (simThreshVal != null) {
+            simThresh = (String)simThreshVal;
         }
-        SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.bu.sim", simThresh));
+        try {
+            SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.bu.sim", simThresh));
+        }
+        catch (NumberFormatException e) {
+            SIM_THRESHOLD = 0.3;
+        }
+        if (simThreshVal != null) {
+            System.err.println("Setting SIM_THRESHOLD from BUSIM to " + SIM_THRESHOLD);
+        }
+
+        String combineFgMatches = "0";
+        Object combineFgMatchesVal = env.get("COMBINEFGMATCHES");
+        if (combineFgMatchesVal != null) {
+            combineFgMatches = (String)combineFgMatchesVal;
+        }
+        if (combineFgMatches.toLowerCase().equals("true")) {
+            SIM_COMBINE_FG_MATCHES = true;
+        }
+        else {
+            int x;
+            try {
+                x = Integer.parseInt(System.getProperty("gumtree.match.bu.sim", combineFgMatches));
+            }
+            catch (NumberFormatException e) {
+                x = 0;
+            }
+            SIM_COMBINE_FG_MATCHES = x != 0;
+        }
+        if (combineFgMatchesVal != null) {
+            System.err.println("Setting SIM_COMBINE_FG_MATCHES from COMBINEFGMATCHES to " + SIM_COMBINE_FG_MATCHES);
+        }
     }
 
     private TreeMap srcIds;
@@ -87,14 +117,40 @@ public class GreedyBottomUpMatcher extends Matcher {
                 for (ITree cand: candidates) {
                     double sim;
                     if (helper != null) {
-//                        sim = helper.scoreMatch(t, cand, mappings) / 100.0;
-                        sim = helper.scoreMatch(t, cand) / 100.0;
+                        if (SIM_COMBINE_FG_MATCHES) {
+                            sim = helper.scoreMatch(t, cand, mappings) / 100.0;
+                        }
+                        else {
+                            sim = helper.scoreMatch(t, cand) / 100.0;
+                        }
                     }
                     else {
                         sim = jaccardSimilarity(t, cand);
                     }
 //                    double sim = jaccardSimilarity(t, cand);
                     if (sim > max && sim >= SIM_THRESHOLD) {
+//                        if (best == null) {
+//                            System.err.println("GreedyBottomUpMatcher.match(): match " + t.getHash() + " -> " + cand.getHash() + ", sim=" + sim + ", jacc=" + jaccardSimilarity(t, cand));
+//                            if (helper != null) {
+//                                if (SIM_COMBINE_FG_MATCHES) {
+//                                    helper.logMatch(t, cand, mappings);
+//                                }
+//                                else {
+//                                    helper.logMatch(t, cand);
+//                                }
+//                            }
+//                        }
+//                        else {
+//                            System.err.println("GreedyBottomUpMatcher.match(): **re-match** " + t.getHash() + " -> " + cand.getHash() + ", sim=" + sim + ", jacc=" + jaccardSimilarity(t, cand));
+//                            if (helper != null) {
+//                                if (SIM_COMBINE_FG_MATCHES) {
+//                                    helper.logMatch(t, cand, mappings);
+//                                }
+//                                else {
+//                                    helper.logMatch(t, cand);
+//                                }
+//                            }
+//                        }
                         max = sim;
                         best = cand;
                     }

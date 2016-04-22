@@ -122,6 +122,20 @@ public class FeatureVectorTable {
                 jaccard * 100.0;
     }
 
+    public static void logMatch(FGPNode a, FGPNode b, FGPNode.NodeMapping mappingsA, FGPNode.NodeMapping mappingsB,
+                                    MappingStore mappings) {
+        double jaccard;
+        if (mappingsA == null && mappingsB == null && mappings == null) {
+            jaccard = a.nodeFeatures.jaccardSimilarity(b.nodeFeatures);
+        }
+        else {
+            double jaccardParts[] = a.nodeFeatures.jaccardSimilarityParts(b.nodeFeatures);
+            jaccardParts[0] += matchAdditive(a, b, mappingsA, mappingsB, mappings);
+            jaccard = jaccardParts[1] == 0.0 ? 0.0 : jaccardParts[0] / jaccardParts[1];
+        }
+        System.err.println("jaccard=" + jaccard*100.0 + ", context=" + scoreMatchContext(a, b));
+    }
+
     private static double matchAdditive(FGPNode a, FGPNode b, FGPNode.NodeMapping mappingsA, FGPNode.NodeMapping mappingsB,
                                  MappingStore mappings) {
         Set<ITree> dstDescs = new HashSet<>(b.node.getDescendants());

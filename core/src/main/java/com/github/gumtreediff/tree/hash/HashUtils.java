@@ -31,7 +31,8 @@ public class HashUtils {
 
     public static final int BASE = 33;
 
-    public static final HashGenerator DEFAULT_HASH_GENERATOR = new RollingHashGenerator.Md5RollingHashGenerator();
+//    public static final HashGenerator DEFAULT_HASH_GENERATOR = new RollingHashGenerator.Md5RollingHashGenerator();
+    public static final HashGenerator DEFAULT_HASH_GENERATOR = new HashDictionaryGenerator();
 
     public static int byteArrayToInt(byte[] b) {
         return   b[3] & 0xFF | (b[2] & 0xFF) << 8 | (b[1] & 0xFF) << 16 | (b[0] & 0xFF) << 24;

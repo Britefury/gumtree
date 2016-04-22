@@ -34,4 +34,12 @@ public class FingerprintMatchHelper {
     public double scoreMatch(ITree a, ITree b, MappingStore mappings) {
         return FeatureVectorTable.scoreMatch(mappingA.get(a), mappingB.get(b), mappingA, mappingB, mappings);
     }
+
+    public void logMatch(ITree a, ITree b) {
+        FeatureVectorTable.logMatch(mappingA.get(a), mappingB.get(b), null, null, null);
+    }
+
+    public void logMatch(ITree a, ITree b, MappingStore mappings) {
+        FeatureVectorTable.logMatch(mappingA.get(a), mappingB.get(b), mappingA, mappingB, mappings);
+    }
 }

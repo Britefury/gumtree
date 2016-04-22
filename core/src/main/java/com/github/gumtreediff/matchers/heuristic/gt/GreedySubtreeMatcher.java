@@ -34,6 +34,7 @@ import java.util.*;
 
 public class GreedySubtreeMatcher extends SubtreeMatcher {
     FingerprintMatchHelper helper;
+    private int treeLeftA[], treeLeftB[], treeRightA[], treeRightB[];
 
     public void setHelper(FingerprintMatchHelper h) {
         this.helper = h;
@@ -41,6 +42,37 @@ public class GreedySubtreeMatcher extends SubtreeMatcher {
 
     public GreedySubtreeMatcher(ITree src, ITree dst, MappingStore store) {
         super(src, dst, store);
+    }
+
+    @Override
+    public void match() {
+        int nA = src.getSize();
+        int nB = dst.getSize();
+
+        treeLeftA = new int[nA];
+        treeRightA = new int[nA];
+        treeLeftB = new int[nB];
+        treeRightB = new int[nB];
+
+        updateTreeLeftRight(treeLeftA, treeRightA, 0, 0, src);
+        updateTreeLeftRight(treeLeftB, treeRightB, 0, 0, dst);
+
+        super.match();
+    }
+
+    private void updateTreeLeftRight(int treeLeft[], int treeRight[], int left, int right, ITree node) {
+        int nodeId = node.getId();
+        int size = node.getSize();
+        treeLeft[nodeId] = left;
+        treeRight[nodeId] = right;
+        int cLeft = left;
+        int cRight = right + size - 1;
+        for (ITree ch: node.getChildren()) {
+            int chSize = ch.getSize();
+            cRight -= chSize;
+            updateTreeLeftRight(treeLeft, treeRight, cLeft, cRight, ch);
+            cLeft += chSize;
+        }
     }
 
     public void filterMappings(MultiMappingStore multiMappings) {
@@ -63,7 +95,8 @@ public class GreedySubtreeMatcher extends SubtreeMatcher {
         // Rank the mappings by score.
         Set<ITree> srcIgnored = new HashSet<>();
         Set<ITree> dstIgnored = new HashSet<>();
-        Collections.sort(ambiguousList, new MappingComparator(ambiguousList));
+        MappingComparator cmp = new MappingComparator(ambiguousList);
+        Collections.sort(ambiguousList, cmp);
 
         // Select the best ambiguous mappings
         while (ambiguousList.size() > 0) {
@@ -115,15 +148,31 @@ public class GreedySubtreeMatcher extends SubtreeMatcher {
                 return helper.scoreMatchContext(src, dst) / 100.0;
             }
             else {
+                // Jaccard similarity; measure of similarity of node subtree contents
                 double jaccard = jaccardSimilarity(src.getParent(), dst.getParent());
-                int posSrc = (src.isRoot()) ? 0 : src.getParent().getChildPosition(src);
-                int posDst = (dst.isRoot()) ? 0 : dst.getParent().getChildPosition(dst);
-                int maxSrcPos =  (src.isRoot()) ? 1 : src.getParent().getChildren().size();
-                int maxDstPos =  (dst.isRoot()) ? 1 : dst.getParent().getChildren().size();
-                int maxPosDiff = Math.max(maxSrcPos, maxDstPos);
-                double pos = 1D - ((double) Math.abs(posSrc - posDst) / (double) maxPosDiff);
-                double po = 1D - ((double) Math.abs(src.getId() - dst.getId())
-                        / (double) GreedySubtreeMatcher.this.getMaxTreeSize());
+
+                // Position similarity; measure of similarity of position of nodes within parents
+                int aPosLeft = (src.isRoot()) ? 0 : src.getParent().getChildPosition(src);
+                int bPosLeft = (dst.isRoot()) ? 0 : dst.getParent().getChildPosition(dst);
+                int aPosRight = (src.isRoot()) ? 0 : src.getParent().getChildren().size() - aPosLeft - 1;
+                int bPosRight = (dst.isRoot()) ? 0 : dst.getParent().getChildren().size() - bPosLeft - 1;
+                double posLeftSim = Math.min(aPosLeft, bPosLeft) / (double)Math.max(Math.max(aPosLeft, bPosLeft), 1);
+                double posRightSim = Math.min(aPosRight, bPosRight) / (double)Math.max(Math.max(aPosRight, bPosRight), 1);
+                double pos = (posLeftSim + posRightSim) * 0.5;
+
+                // Tree weight to left and right similarity; measure of similarity of position of nodes within trees
+                int a = src.getId(), b = dst.getId();
+                double leftSim = Math.min(treeLeftA[a], treeLeftB[b]) / (double)Math.max(Math.max(treeLeftA[a], treeLeftB[b]), 1);
+                double rightSim = Math.min(treeRightA[a], treeRightB[b]) / (double)Math.max(Math.max(treeRightA[a], treeRightB[b]), 1);
+                double weightPo = (leftSim + rightSim) * 0.5;
+
+                // example |a| = 1000, |b| = 1100, |node| = 10
+                // :: tla = 100, tlb = 110, tra = 890, trb = 980 -> min(100,110)/max(100,110) + min(890,980)/max(890,980)
+                //                                                  100/110 + 890/980 = 1.81725417439703
+                // :: tla = 100, tlb = 120, tra = 890, trb = 970 -> min(100,120)/max(100,120) + min(890,970)/max(890/970)
+                //                                                  100/120 + 890/970 = 1.75085910652921
+
+                double po = weightPo;
                 return (100 * jaccard + 10 * pos + po) / 100.0;
             }
         }
