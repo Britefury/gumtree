@@ -41,7 +41,7 @@ public class FingerprintMatcher extends Matcher {
         long t4 = System.nanoTime();
         double bottomUpTime = (t4 - t3) * 1.0e-9;
 
-        System.out.println("Fingerprint generation " + nTA + " x " + nTB + " nodes: " + fgTime + "s, top down " + topDownTime + "s, bottom up " + bottomUpTime + "s");
+        System.err.println("Fingerprint generation " + nTA + " x " + nTB + " nodes: " + fgTime + "s, top down " + topDownTime + "s, bottom up " + bottomUpTime + "s");
     }
 
 
@@ -165,7 +165,7 @@ public class FingerprintMatcher extends Matcher {
         ArrayList<FGPNode> nodesA = nodesInUnmatchedSubtrees(treeA);
         ArrayList<FGPNode> nodesB = nodesInUnmatchedSubtrees(treeB);
 
-        System.out.println("Fingerprint bottom up match " + nodesA.size() + " x " + nodesB.size());
+        System.err.println("Fingerprint bottom up match " + nodesA.size() + " x " + nodesB.size());
 
         ArrayList<ScoredMatch> scoredMatches = new ArrayList<>();
         for (FGPNode a: nodesA) {
