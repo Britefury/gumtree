@@ -3,6 +3,8 @@ package com.github.gumtreediff.matchers.heuristic.fgp;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.tree.ITree;
 
+import java.util.Map;
+
 /**
  * Created by Geoff on 07/04/2016.
  */

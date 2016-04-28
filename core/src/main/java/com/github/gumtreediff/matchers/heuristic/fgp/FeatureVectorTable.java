@@ -11,15 +11,16 @@ import java.util.Set;
  * Created by Geoff on 06/04/2016.
  */
 public class FeatureVectorTable {
-    FingerprintTable fingerprints = new FingerprintTable();
-    ArrayList<FeatureVector> featsByIndex = new ArrayList<>();
+    FingerprintTable shapeFingerprints = new FingerprintTable();
+    FingerprintTable contentFingerprints = new FingerprintTable();
+    ArrayList<FeatureVector> featsByContentFGIndex = new ArrayList<>();
 
 
     public void addTree(FGPNode tree) {
-        tree.updateFingerprintIndex(fingerprints);
+        tree.updateFingerprintIndex(shapeFingerprints, contentFingerprints);
 
-        for (int i = featsByIndex.size(); i < fingerprints.size(); i++) {
-            featsByIndex.add(null);
+        for (int i = featsByContentFGIndex.size(); i < contentFingerprints.size(); i++) {
+            featsByContentFGIndex.add(null);
         }
 
         buildTreeFeaturesBottomUp(tree);
@@ -58,15 +59,17 @@ public class FeatureVectorTable {
         }
 
         // Compute node feature vectors
-        int fg = node.getFingerprintIndex();
-        FeatureVector feats = featsByIndex.get(fg);
+        int contentFg = node.getContentFingerprintIndex();
+        FeatureVector feats = featsByContentFGIndex.get(contentFg);
         if (feats == null) {
             feats = new FeatureVector();
-            feats.set(fg, 1);
+//            int shapeFG = node.getShapeFingerprintIndex();
+            feats.set(contentFg, 1);
 
             for (FGPNode child: node.children) {
                 feats = feats.add(child.nodeFeatures);
             }
+            featsByContentFGIndex.set(contentFg, feats);
         }
 
         node.nodeFeatures = feats;
@@ -146,7 +149,7 @@ public class FeatureVectorTable {
             if (m != null && dstDescs.contains(m)) {
                 FGPNode x = mappingsA.get(t);
                 FGPNode y = mappingsB.get(m);
-                if (x.getFingerprintIndex() != y.getFingerprintIndex()) {
+                if (x.getContentFingerprintIndex() != y.getContentFingerprintIndex()) {
                     additive++;
                 }
             }

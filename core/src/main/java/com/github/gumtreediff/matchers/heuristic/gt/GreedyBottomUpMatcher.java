@@ -74,7 +74,7 @@ public class GreedyBottomUpMatcher extends Matcher {
         else {
             int x;
             try {
-                x = Integer.parseInt(System.getProperty("gumtree.match.bu.sim", combineFgMatches));
+                x = Integer.parseInt(System.getProperty("gumtree.match.bu.combine_fg_matches", combineFgMatches));
             }
             catch (NumberFormatException e) {
                 x = 0;

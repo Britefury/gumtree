@@ -25,6 +25,10 @@ public class FGPNode {
         public FGPNode get(ITree srcNode) {
             return nodeIDToFGPNode.get(srcNode.getId());
         }
+
+        public FGPNode getByID(int nodeId) {
+            return nodeIDToFGPNode.get(nodeId);
+        }
     }
 
     protected ITree node;
@@ -34,12 +38,11 @@ public class FGPNode {
     protected int depth = 0, subtreeSize = 0;
     protected boolean matched = false;
 
-    private String shapeSha;
-    private int fingerprintIndex = -1;
+    private String shapeSha, contentSha;
+    private int shapeFGIndex = -1, contentFGIndex = -1;
     protected FeatureVector nodeFeatures = null;
     protected FeatureVector leftSiblingsFeats = null, rightSiblingsFeats = null;
     protected double leftTree, rightTree;
-//    protected FeatureVector leftTreeFeats = null, rightTreeFeats = null;
 
 
     public FGPNode(ITree node, NodeMapping mapping) {
@@ -63,17 +66,25 @@ public class FGPNode {
     }
 
 
-    public String getShapeSha() {
-        if (shapeSha == null) {
+    public String getSha(boolean content) {
+        String sha = content ? contentSha : shapeSha;
+        if (sha == null) {
             StringBuilder src = new StringBuilder();
             src.append(String.valueOf(node.getType()));
-            src.append("(");
+            if (content) {
+                src.append("[");
+                src.append(node.getLabel());
+                src.append("](");
+            }
+            else {
+                src.append("(");
+            }
             boolean first = true;
             for (FGPNode child: children) {
                 if (!first) {
                     src.append(",");
                 }
-                src.append(child.getShapeSha());
+                src.append(child.getSha(content));
                 first = false;
             }
             src.append(")");
@@ -85,21 +96,37 @@ public class FGPNode {
                 throw new RuntimeException();
             }
             byte[] digest = md.digest(src.toString().getBytes());
-            shapeSha = DatatypeConverter.printHexBinary(digest);
-        }
-        return shapeSha;
-    }
-
-    public void updateFingerprintIndex(FingerprintTable fingerprints) {
-        if (fingerprintIndex == -1) {
-            for (FGPNode node: children) {
-                node.updateFingerprintIndex(fingerprints);
+            sha = DatatypeConverter.printHexBinary(digest);
+            if (content) {
+                contentSha = sha;
             }
-            fingerprintIndex = fingerprints.getIndexForSha(getShapeSha());
+            else {
+                shapeSha = sha;
+            }
+        }
+        return sha;
+    }
+
+    public void updateFingerprintIndex(FingerprintTable shapeFingerprints, FingerprintTable contentFingerprints) {
+        if (shapeFingerprints != null && shapeFGIndex == -1 ||
+            contentFingerprints != null && contentFGIndex == -1) {
+            for (FGPNode node: children) {
+                node.updateFingerprintIndex(shapeFingerprints, contentFingerprints);
+            }
+            if (shapeFingerprints != null) {
+                shapeFGIndex = shapeFingerprints.getIndexForSha(getSha(false));
+            }
+            if (contentFingerprints != null) {
+                contentFGIndex = contentFingerprints.getIndexForSha(getSha(true));
+            }
         }
     }
 
-    public int getFingerprintIndex() {
-        return fingerprintIndex;
+    public int getShapeFingerprintIndex() {
+        return shapeFGIndex;
+    }
+
+    public int getContentFingerprintIndex() {
+        return contentFGIndex;
     }
 }
