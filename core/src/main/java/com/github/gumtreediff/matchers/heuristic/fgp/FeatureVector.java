@@ -198,6 +198,21 @@ public class FeatureVector {
     }
 
 
+    public double jaccardSimilarityUpperBound(FeatureVector b) {
+        double intersection = Math.min(sum, b.sum);
+        double union = Math.max(sum, b.sum);
+        if (union == 0.0) {
+            if (intersection != 0.0) {
+                throw new RuntimeException("intersection != 0 && union == 0");
+            }
+            return 0.0;
+        }
+        else {
+            return intersection / union;
+        }
+    }
+
+
     public FeatureVector add(FeatureVector b) {
         ArrayList<Integer> ndx = new ArrayList<>();
         ArrayList<Integer> val = new ArrayList<>();

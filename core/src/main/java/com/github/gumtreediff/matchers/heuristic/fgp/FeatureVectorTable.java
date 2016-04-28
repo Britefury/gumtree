@@ -103,6 +103,14 @@ public class FeatureVectorTable {
                 a.rightSiblingsFeats.jaccardSimilarity(b.rightSiblingsFeats) * 5.0;
     }
 
+    public static double scoreMatchContextUpperBound(FGPNode a, FGPNode b) {
+        double leftSim = Math.min(a.leftTree, b.leftTree) / (Math.max(a.leftTree, b.leftTree) + 1.0e-9);
+        double rightSim = Math.min(a.rightTree, b.rightTree) / (Math.max(a.rightTree, b.rightTree) + 1.0e-9);
+        return leftSim * 0.5 + rightSim * 0.5 +
+                a.leftSiblingsFeats.jaccardSimilarityUpperBound(b.leftSiblingsFeats) * 5.0 +
+                a.rightSiblingsFeats.jaccardSimilarityUpperBound(b.rightSiblingsFeats) * 5.0;
+    }
+
 //    public static double scoreMatchContext(FGPNode a, FGPNode b) {
 //        return a.leftTreeFeats.jaccardSimilarity(b.leftTreeFeats) +
 //                a.rightTreeFeats.jaccardSimilarity(b.rightTreeFeats) +
@@ -123,6 +131,11 @@ public class FeatureVectorTable {
         }
         return scoreMatchContext(a, b) +
                 jaccard * 100.0;
+    }
+
+    public static double scoreMatchUpperBound(FGPNode a, FGPNode b) {
+        return a.nodeFeatures.jaccardSimilarityUpperBound(b.nodeFeatures) * 100.0 +
+                scoreMatchContextUpperBound(a, b);
     }
 
     public static void logMatch(FGPNode a, FGPNode b, FGPNode.NodeMapping mappingsA, FGPNode.NodeMapping mappingsB,

@@ -245,32 +245,59 @@ public class FingerprintMatcher extends Matcher {
 
         long t2 = System.nanoTime();
 
-        ArrayList<ScoredMatch> scoredMatches = new ArrayList<>();
+        // Gather all matches whose upper bound is less than the threshold
+        ArrayList<ScoredMatch> matchesByUpperBound = new ArrayList<>();
         for (FGPNode a: nodesA) {
             for (FGPNode b: nodesB) {
-                double score = FeatureVectorTable.scoreMatch(a, b, null, null, null) * 0.01;
-                if (score > SIM_THRESHOLD) {
-                    scoredMatches.add(new ScoredMatch(FeatureVectorTable.scoreMatch(a, b, null, null, null), a, b));
+                double scoreUpperBound = FeatureVectorTable.scoreMatchUpperBound(a, b) * 0.01;
+                if (scoreUpperBound > SIM_THRESHOLD) {
+                    matchesByUpperBound.add(new ScoredMatch(scoreUpperBound, a, b));
                 }
             }
         }
+
         long t3 = System.nanoTime();
 
-        scoredMatches.sort(new ScoreMatchComparator());
-        long t4 = System.nanoTime();
+        // Convert to heap
+        PriorityQueue<ScoredMatch> matchesByUpperBoundHeap = new PriorityQueue<>(matchesByUpperBound);
+        PriorityQueue<ScoredMatch> matchesByScoreHeap = new PriorityQueue<>();
 
         ArrayList<MatchByHeight> matchesByHeight = new ArrayList<>();
 
-        // Match pairs in order
-        for (ScoredMatch potentialMatch: scoredMatches) {
-            if (!potentialMatch.a.matched && !potentialMatch.b.matched &&
-                    potentialMatch.a.node.getType() == potentialMatch.b.node.getType()) {
-                potentialMatch.a.matched = potentialMatch.b.matched = true;
-                int heightScore = potentialMatch.a.node.getHeight() + potentialMatch.b.node.getHeight();
-                matchesByHeight.add(new MatchByHeight(heightScore, potentialMatch.a, potentialMatch.b));
-//                lastChanceMatch(matchHelper, potentialMatch.a.node, potentialMatch.b.node);
+        long t4 = System.nanoTime();
+
+        while (!matchesByUpperBoundHeap.isEmpty()) {
+            // Remove any matches from `matchesByScoreHeap` is greater than the highest upper bound available
+            // as determined by the entry at the head of `matchesByUpperBoundHeap`, since no match can be
+            // moved from `matchesByUpperBoundHeap` that will beat it.
+            while (!matchesByScoreHeap.isEmpty() && matchesByScoreHeap.peek().score > matchesByUpperBoundHeap.peek().score) {
+                ScoredMatch potentialMatch = matchesByScoreHeap.poll();
+                if (!potentialMatch.a.matched && !potentialMatch.b.matched &&
+                        potentialMatch.a.node.getType() == potentialMatch.b.node.getType()) {
+                    potentialMatch.a.matched = potentialMatch.b.matched = true;
+                    int heightScore = potentialMatch.a.node.getHeight() + potentialMatch.b.node.getHeight();
+                    matchesByHeight.add(new MatchByHeight(heightScore, potentialMatch.a, potentialMatch.b));
+                }
+            }
+
+            //
+            while ((!matchesByUpperBoundHeap.isEmpty()) &&
+                    (matchesByScoreHeap.isEmpty() || matchesByScoreHeap.peek().score <= matchesByUpperBoundHeap.peek().score)) {
+                ScoredMatch upperBound = matchesByUpperBoundHeap.poll();
+                if (!upperBound.a.matched && !upperBound.b.matched &&
+                        upperBound.a.node.getType() == upperBound.b.node.getType()) {
+                    double score = FeatureVectorTable.scoreMatch(upperBound.a, upperBound.b, null, null, null);
+                    ScoredMatch scored = new ScoredMatch(score, upperBound.a, upperBound.b);
+                    matchesByScoreHeap.add(scored);
+                }
             }
         }
+
+        if (!matchesByUpperBoundHeap.isEmpty()) {
+            throw new RuntimeException("Did not exhaust matchesByUpperBoundHeap");
+        }
+
+
         long t5 = System.nanoTime();
 
 
@@ -287,12 +314,12 @@ public class FingerprintMatcher extends Matcher {
 
 
         double gatherTime = (t2 - t1) * 1.0e-9;
-        double scoreTime = (t3 - t2) * 1.0e-9;
-        double sortTime = (t4 - t3) * 1.0e-9;
+        double scoreUpperBoundTime = (t3 - t2) * 1.0e-9;
+        double heapTime = (t4 - t3) * 1.0e-9;
         double chooseBestMatchesTime = (t5 - t4) * 1.0e-9;
         double sortBestMatchesTime = (t6 - t5) * 1.0e-9;
         double mappingTime = (t7 - t6) * 1.0e-9;
-        System.err.println("bottomUpMatch(): " + nodesA.size() + " x " + nodesB.size() + ", gather time=" + gatherTime + "s, score time=" + scoreTime + "s, sort time=" + sortTime + "s, choose best matches time=" + chooseBestMatchesTime + "s, sort best matches time=" + sortBestMatchesTime + "s, mapping time=" + mappingTime + "s");
+        System.err.println("bottomUpMatch(): " + nodesA.size() + " x " + nodesB.size() + ", gather time=" + gatherTime + "s, score u-b time=" + scoreUpperBoundTime + "s, heap time=" + heapTime + "s, choose best matches time=" + chooseBestMatchesTime + "s, sort best matches time=" + sortBestMatchesTime + "s, mapping time=" + mappingTime + "s");
     }
 
 
@@ -363,7 +390,7 @@ public class FingerprintMatcher extends Matcher {
         }
     }
 
-    private static class ScoredMatch {
+    private static class ScoredMatch implements Comparable<ScoredMatch> {
         private double score;
         private FGPNode a, b;
 
@@ -371,6 +398,11 @@ public class FingerprintMatcher extends Matcher {
             this.score = score;
             this.a = a;
             this.b = b;
+        }
+
+        @Override
+        public int compareTo(ScoredMatch o) {
+            return -Double.compare(score, o.score);
         }
     }
 
