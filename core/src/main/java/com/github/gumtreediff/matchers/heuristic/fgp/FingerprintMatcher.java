@@ -266,11 +266,12 @@ public class FingerprintMatcher extends Matcher {
 
         long t4 = System.nanoTime();
 
-        while (!matchesByUpperBoundHeap.isEmpty()) {
+        while (!matchesByUpperBoundHeap.isEmpty() || !matchesByScoreHeap.isEmpty()) {
             // Remove any matches from `matchesByScoreHeap` is greater than the highest upper bound available
             // as determined by the entry at the head of `matchesByUpperBoundHeap`, since no match can be
             // moved from `matchesByUpperBoundHeap` that will beat it.
-            while (!matchesByScoreHeap.isEmpty() && matchesByScoreHeap.peek().score > matchesByUpperBoundHeap.peek().score) {
+            while (!matchesByScoreHeap.isEmpty() &&
+                    (matchesByUpperBoundHeap.isEmpty() || matchesByScoreHeap.peek().score > matchesByUpperBoundHeap.peek().score)) {
                 ScoredMatch potentialMatch = matchesByScoreHeap.poll();
                 if (!potentialMatch.a.matched && !potentialMatch.b.matched &&
                         potentialMatch.a.node.getType() == potentialMatch.b.node.getType()) {
@@ -280,8 +281,10 @@ public class FingerprintMatcher extends Matcher {
                 }
             }
 
-            //
-            while ((!matchesByUpperBoundHeap.isEmpty()) &&
+            // Move matches from `matchesByUpperBoundHeap` to `matchesByScoreHeap` until the upper-bound score
+            // of the match at the front of `matchesByUpperBoundHeap` is less than the actual score of the match
+            // at the front of `matchesByScoreHeap`
+            while (!matchesByUpperBoundHeap.isEmpty() &&
                     (matchesByScoreHeap.isEmpty() || matchesByScoreHeap.peek().score <= matchesByUpperBoundHeap.peek().score)) {
                 ScoredMatch upperBound = matchesByUpperBoundHeap.poll();
                 if (!upperBound.a.matched && !upperBound.b.matched &&
@@ -295,6 +298,9 @@ public class FingerprintMatcher extends Matcher {
 
         if (!matchesByUpperBoundHeap.isEmpty()) {
             throw new RuntimeException("Did not exhaust matchesByUpperBoundHeap");
+        }
+        if (!matchesByScoreHeap.isEmpty()) {
+            throw new RuntimeException("Did not exhaust matchesByScoreHeap");
         }
 
 
