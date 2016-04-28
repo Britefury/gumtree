@@ -289,7 +289,7 @@ public class FingerprintMatcher extends Matcher {
                 ScoredMatch upperBound = matchesByUpperBoundHeap.poll();
                 if (!upperBound.a.matched && !upperBound.b.matched &&
                         upperBound.a.node.getType() == upperBound.b.node.getType()) {
-                    double score = FeatureVectorTable.scoreMatch(upperBound.a, upperBound.b, null, null, null);
+                    double score = FeatureVectorTable.scoreMatch(upperBound.a, upperBound.b, null, null, null) * 0.01;
                     if (score >= SIM_THRESHOLD) {
                         ScoredMatch scored = new ScoredMatch(score, upperBound.a, upperBound.b);
                         matchesByScoreHeap.add(scored);
