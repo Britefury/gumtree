@@ -74,7 +74,7 @@ public class HungarianSubtreeMatcher extends SubtreeMatcher {
     }
 
     private double cost(ITree src, ITree dst) {
-        return 111D - sim(src, dst);
+        return 1.11D - sim(src, dst);
     }
 
     private class MultiMappingComparator implements Comparator<MultiMappingStore> {

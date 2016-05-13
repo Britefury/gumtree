@@ -24,17 +24,17 @@ public class FingerprintMatcher extends Matcher {
     static {
         String simThresh = "0.3";
         Map<String, String> env = System.getenv();
-        Object simThreshVal = env.get("BUSIM");
+        Object simThreshVal = env.get("FGSIM");
         if (simThreshVal != null) {
             simThresh = (String) simThreshVal;
         }
         try {
-            SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.bu.sim", simThresh));
+            SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.fg.sim", simThresh));
         } catch (NumberFormatException e) {
             SIM_THRESHOLD = 0.3;
         }
         if (simThreshVal != null) {
-            System.err.println("Setting SIM_THRESHOLD from BUSIM to " + SIM_THRESHOLD);
+            System.err.println("Setting SIM_THRESHOLD from FGSIM to " + SIM_THRESHOLD);
         }
     }
 
@@ -67,7 +67,7 @@ public class FingerprintMatcher extends Matcher {
         long t4 = System.nanoTime();
         double bottomUpTime = (t4 - t3) * 1.0e-9;
 
-        System.err.println("Fingerprint generation " + nTA + " x " + nTB + " nodes: " + fgTime + "s, top down " + topDownTime + "s, bottom up " + bottomUpTime + "s");
+//        System.err.println("Fingerprint generation " + nTA + " x " + nTB + " nodes: " + fgTime + "s, top down " + topDownTime + "s, bottom up " + bottomUpTime + "s");
     }
 
 
@@ -132,7 +132,7 @@ public class FingerprintMatcher extends Matcher {
                     ArrayList<ScoredMatch> scoredMatches = new ArrayList<>();
                     for (FGPNode a: pair.nodesA) {
                         for (FGPNode b: pair.nodesB) {
-                            scoredMatches.add(new ScoredMatch(FeatureVectorTable.scoreMatchContext(a, b), a, b));
+                            scoredMatches.add(new ScoredMatch(FeatureVectorTable.scoreMatch(a.parent, b.parent, null, null, null), a, b));
                         }
                     }
                     scoredMatches.sort(new ScoreMatchComparator());
@@ -249,7 +249,7 @@ public class FingerprintMatcher extends Matcher {
         ArrayList<ScoredMatch> matchesByUpperBound = new ArrayList<>();
         for (FGPNode a: nodesA) {
             for (FGPNode b: nodesB) {
-                double scoreUpperBound = FeatureVectorTable.scoreMatchUpperBound(a, b) * 0.01;
+                double scoreUpperBound = FeatureVectorTable.scoreMatchUpperBound(a, b);
                 if (scoreUpperBound > SIM_THRESHOLD) {
                     matchesByUpperBound.add(new ScoredMatch(scoreUpperBound, a, b));
                 }
@@ -289,7 +289,7 @@ public class FingerprintMatcher extends Matcher {
                 ScoredMatch upperBound = matchesByUpperBoundHeap.poll();
                 if (!upperBound.a.matched && !upperBound.b.matched &&
                         upperBound.a.node.getType() == upperBound.b.node.getType()) {
-                    double score = FeatureVectorTable.scoreMatch(upperBound.a, upperBound.b, null, null, null) * 0.01;
+                    double score = FeatureVectorTable.scoreMatch(upperBound.a, upperBound.b, null, null, null);
                     if (score >= SIM_THRESHOLD) {
                         ScoredMatch scored = new ScoredMatch(score, upperBound.a, upperBound.b);
                         matchesByScoreHeap.add(scored);
@@ -327,7 +327,7 @@ public class FingerprintMatcher extends Matcher {
         double chooseBestMatchesTime = (t5 - t4) * 1.0e-9;
         double sortBestMatchesTime = (t6 - t5) * 1.0e-9;
         double mappingTime = (t7 - t6) * 1.0e-9;
-        System.err.println("bottomUpMatch(): " + nodesA.size() + " x " + nodesB.size() + ", gather time=" + gatherTime + "s, score u-b time=" + scoreUpperBoundTime + "s, heap time=" + heapTime + "s, choose best matches time=" + chooseBestMatchesTime + "s, sort best matches time=" + sortBestMatchesTime + "s, mapping time=" + mappingTime + "s");
+//        System.err.println("bottomUpMatch(): " + nodesA.size() + " x " + nodesB.size() + ", gather time=" + gatherTime + "s, score u-b time=" + scoreUpperBoundTime + "s, heap time=" + heapTime + "s, choose best matches time=" + chooseBestMatchesTime + "s, sort best matches time=" + sortBestMatchesTime + "s, mapping time=" + mappingTime + "s");
     }
 
 
@@ -441,4 +441,57 @@ public class FingerprintMatcher extends Matcher {
             return Integer.compare(o1.heightScore, o2.heightScore);
         }
     }
+
+
+
+    protected int numberOfCommonDescendants(FGPNode src, FGPNode dst, FingerprintMatchHelper matchHelper) {
+        int common = 0;
+
+        for (FGPNode t: src.depthFirst()) {
+            ITree m = mappings.getDst(t.node);
+            if (m != null) {
+                FGPNode fm = matchHelper.mappingB.get(m);
+                if (fm.isInSubtreeRootedAt(dst)) {
+                    common++;
+                }
+            }
+        }
+
+        return common;
+    }
+
+    /*protected double sim(ITree src, ITree dst) {
+        // Jaccard similarity; measure of similarity of node subtree contents
+        double jaccard = jaccardSimilarity(src.getParent(), dst.getParent());
+
+        // Position similarity; measure of similarity of position of nodes within parents
+        int aPosLeft = (src.isRoot()) ? 0 : src.getParent().getChildPosition(src);
+        int bPosLeft = (dst.isRoot()) ? 0 : dst.getParent().getChildPosition(dst);
+        int aPosRight = (src.isRoot()) ? 0 : src.getParent().getChildren().size() - aPosLeft - 1;
+        int bPosRight = (dst.isRoot()) ? 0 : dst.getParent().getChildren().size() - bPosLeft - 1;
+        double posLeftSim = Math.min(aPosLeft, bPosLeft) / (double)Math.max(Math.max(aPosLeft, bPosLeft), 1);
+        double posRightSim = Math.min(aPosRight, bPosRight) / (double)Math.max(Math.max(aPosRight, bPosRight), 1);
+        double pos = (posLeftSim + posRightSim) * 0.5;
+
+        // Tree weight to left and right similarity; measure of similarity of position of nodes within trees
+        int a = src.getId(), b = dst.getId();
+        double leftSim = Math.min(treeLeftA[a], treeLeftB[b]) / (double)Math.max(Math.max(treeLeftA[a], treeLeftB[b]), 1);
+        double rightSim = Math.min(treeRightA[a], treeRightB[b]) / (double)Math.max(Math.max(treeRightA[a], treeRightB[b]), 1);
+        double weightPo = (leftSim + rightSim) * 0.5;
+
+        // example |a| = 1000, |b| = 1100, |node| = 10
+        // :: tla = 100, tlb = 110, tra = 890, trb = 980 -> min(100,110)/max(100,110) + min(890,980)/max(890,980)
+        //                                                  100/110 + 890/980 = 1.81725417439703
+        // :: tla = 100, tlb = 120, tra = 890, trb = 970 -> min(100,120)/max(100,120) + min(890,970)/max(890/970)
+        //                                                  100/120 + 890/970 = 1.75085910652921
+
+        double po = weightPo;
+        return jaccard + pos * 0.1 + po * 0.01;
+    }
+
+    protected double jaccardSimilarity(FGPNode src, FGPNode dst, FingerprintMatchHelper matchHelper) {
+        double num = (double) numberOfCommonDescendants(src, dst, matchHelper);
+        double den = (double) src.subtreeSize + (double) dst.subtreeSize - num;
+        return num / den;
+    }*/
 }

@@ -24,8 +24,8 @@ public class FeatureVectorTable {
         }
 
         buildTreeFeaturesBottomUp(tree);
-//        buildNodeFeaturesTopDown(tree, new FeatureVector(), new FeatureVector());
-        buildNodeFeaturesTopDown(tree, 0.0, 0.0);
+//        buildNodeFeaturesTopDown(tree, 0.0, 0.0, new FeatureVector());
+        buildNodeFeaturesTopDown(tree, 0.0, 0.0, null);
     }
 
     private void buildTreeFeaturesBottomUp(FGPNode root) {
@@ -75,40 +75,40 @@ public class FeatureVectorTable {
         node.nodeFeatures = feats;
     }
 
-    private void buildNodeFeaturesTopDown(FGPNode node, double leftTree, double rightTree) {
+    private void buildNodeFeaturesTopDown(FGPNode node, double leftTree, double rightTree,
+                                          FeatureVector parentContainmentFeatures) {
         node.leftTree = leftTree;
         node.rightTree = rightTree;
+        node.parentContainmentFeatures = parentContainmentFeatures;
 
         for (FGPNode child: node.children) {
+            FeatureVector childContainment = null;
+            if (parentContainmentFeatures != null) {
+                childContainment = node.nodeFeatures.sub(child.nodeFeatures);
+            }
             buildNodeFeaturesTopDown(child, leftTree + child.leftSiblingsFeats.getSum(),
-                                     rightTree + child.rightSiblingsFeats.getSum());
+                                     rightTree + child.rightSiblingsFeats.getSum(),
+                                     childContainment);
         }
     }
-//
-//    private void buildNodeFeaturesTopDown(FGPNode node, FeatureVector fgLeft, FeatureVector fgRight) {
-//        node.leftTreeFeats = fgLeft;
-//        node.rightTreeFeats = fgRight;
-//
-//        for (FGPNode child: node.children) {
-//            buildNodeFeaturesTopDown(child, fgLeft.add(child.leftSiblingsFeats), fgRight.add(child.rightSiblingsFeats));
-//        }
-//    }
 
 
     public static double scoreMatchContext(FGPNode a, FGPNode b) {
         double leftSim = Math.min(a.leftTree, b.leftTree) / (Math.max(a.leftTree, b.leftTree) + 1.0e-9);
         double rightSim = Math.min(a.rightTree, b.rightTree) / (Math.max(a.rightTree, b.rightTree) + 1.0e-9);
-        return leftSim * 0.5 + rightSim * 0.5 +
-                a.leftSiblingsFeats.jaccardSimilarity(b.leftSiblingsFeats) * 5.0 +
-                a.rightSiblingsFeats.jaccardSimilarity(b.rightSiblingsFeats) * 5.0;
+        return leftSim * 0.005 + rightSim * 0.005 +
+                a.leftSiblingsFeats.jaccardSimilarity(b.leftSiblingsFeats) * 0.05 +
+                a.rightSiblingsFeats.jaccardSimilarity(b.rightSiblingsFeats) * 0.05/* +
+                a.parentContainmentFeatures.jaccardSimilarity(b.parentContainmentFeatures) * 0.2*/;
     }
 
     public static double scoreMatchContextUpperBound(FGPNode a, FGPNode b) {
         double leftSim = Math.min(a.leftTree, b.leftTree) / (Math.max(a.leftTree, b.leftTree) + 1.0e-9);
         double rightSim = Math.min(a.rightTree, b.rightTree) / (Math.max(a.rightTree, b.rightTree) + 1.0e-9);
-        return leftSim * 0.5 + rightSim * 0.5 +
-                a.leftSiblingsFeats.jaccardSimilarityUpperBound(b.leftSiblingsFeats) * 5.0 +
-                a.rightSiblingsFeats.jaccardSimilarityUpperBound(b.rightSiblingsFeats) * 5.0;
+        return leftSim * 0.005 + rightSim * 0.005 +
+                a.leftSiblingsFeats.jaccardSimilarityUpperBound(b.leftSiblingsFeats) * 0.05 +
+                a.rightSiblingsFeats.jaccardSimilarityUpperBound(b.rightSiblingsFeats) * 0.05/* +
+                a.parentContainmentFeatures.jaccardSimilarity(b.parentContainmentFeatures) * 0.2*/;
     }
 
 //    public static double scoreMatchContext(FGPNode a, FGPNode b) {
@@ -130,11 +130,11 @@ public class FeatureVectorTable {
             jaccard = jaccardParts[1] == 0.0 ? 0.0 : jaccardParts[0] / jaccardParts[1];
         }
         return scoreMatchContext(a, b) +
-                jaccard * 100.0;
+                jaccard * 1.0;
     }
 
     public static double scoreMatchUpperBound(FGPNode a, FGPNode b) {
-        return a.nodeFeatures.jaccardSimilarityUpperBound(b.nodeFeatures) * 100.0 +
+        return a.nodeFeatures.jaccardSimilarityUpperBound(b.nodeFeatures) * 1.0 +
                 scoreMatchContextUpperBound(a, b);
     }
 
@@ -149,7 +149,7 @@ public class FeatureVectorTable {
             jaccardParts[0] += matchAdditive(a, b, mappingsA, mappingsB, mappings);
             jaccard = jaccardParts[1] == 0.0 ? 0.0 : jaccardParts[0] / jaccardParts[1];
         }
-        System.err.println("jaccard=" + jaccard*100.0 + ", context=" + scoreMatchContext(a, b));
+        System.err.println("jaccard=" + jaccard + ", context=" + scoreMatchContext(a, b));
     }
 
     private static double matchAdditive(FGPNode a, FGPNode b, FGPNode.NodeMapping mappingsA, FGPNode.NodeMapping mappingsB,

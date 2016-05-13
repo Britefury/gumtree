@@ -6,6 +6,8 @@ import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Stack;
 
 /**
  * Created by Geoff on 06/04/2016.
@@ -33,6 +35,7 @@ public class FGPNode {
 
     protected ITree node;
 
+    protected FGPNode parent;
     protected FGPNode children[];
 
     protected int depth = 0, subtreeSize = 0;
@@ -41,7 +44,7 @@ public class FGPNode {
     private String shapeSha, contentSha;
     private int shapeFGIndex = -1, contentFGIndex = -1;
     protected FeatureVector nodeFeatures = null;
-    protected FeatureVector leftSiblingsFeats = null, rightSiblingsFeats = null;
+    protected FeatureVector leftSiblingsFeats = null, rightSiblingsFeats = null, parentContainmentFeatures = null;
     protected double leftTree, rightTree;
 
 
@@ -56,6 +59,7 @@ public class FGPNode {
         for (int i = 0; i < children.length; i++) {
             FGPNode childNode = new FGPNode(node.getChild(i), mapping);
             this.children[i] = childNode;
+            childNode.parent = this;
 
             depth = Math.max(depth, childNode.depth);
             subtreeSize += childNode.subtreeSize;
@@ -128,5 +132,42 @@ public class FGPNode {
 
     public int getContentFingerprintIndex() {
         return contentFGIndex;
+    }
+
+    public Iterable<FGPNode> depthFirst() {
+        return new Iterable<FGPNode>() {
+            @Override
+            public Iterator<FGPNode> iterator() {
+                Stack<FGPNode> stack = new Stack<>();
+                stack.add(FGPNode.this);
+
+                return new Iterator<FGPNode>() {
+                    @Override
+                    public boolean hasNext() {
+                        return !stack.isEmpty();
+                    }
+
+                    @Override
+                    public FGPNode next() {
+                        FGPNode node = stack.pop();
+                        for (int i = node.children.length - 1; i >= 0; i--) {
+                            stack.add(node.children[i]);
+                        }
+                        return node;
+                    }
+                };
+            }
+        };
+    }
+
+    public boolean isInSubtreeRootedAt(FGPNode subtreeRoot) {
+        FGPNode node = this;
+        while (node != null) {
+            if (node == subtreeRoot) {
+                return true;
+            }
+            node = node.parent;
+        }
+        return false;
     }
 }

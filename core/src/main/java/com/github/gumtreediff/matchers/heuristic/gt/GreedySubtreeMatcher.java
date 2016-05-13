@@ -145,7 +145,7 @@ public class GreedySubtreeMatcher extends SubtreeMatcher {
 
         protected double sim(ITree src, ITree dst) {
             if (helper != null) {
-                return helper.scoreMatchContext(src, dst) / 100.0;
+                return helper.scoreMatchContext(src, dst);
             }
             else {
                 // Jaccard similarity; measure of similarity of node subtree contents
@@ -173,7 +173,7 @@ public class GreedySubtreeMatcher extends SubtreeMatcher {
                 //                                                  100/120 + 890/970 = 1.75085910652921
 
                 double po = weightPo;
-                return (100 * jaccard + 10 * pos + po) / 100.0;
+                return jaccard + pos * 0.1 + po * 0.01;
             }
         }
 

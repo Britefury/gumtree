@@ -113,6 +113,10 @@ public class MappingStore implements Iterable<Mapping> {
         return asSet().iterator();
     }
 
+    public int size() {
+        return srcs.size();
+    }
+
     @Override
     public String toString() {
         return asSet().toString();

@@ -118,10 +118,10 @@ public class GreedyBottomUpMatcher extends Matcher {
                     double sim;
                     if (helper != null) {
                         if (SIM_COMBINE_FG_MATCHES) {
-                            sim = helper.scoreMatch(t, cand, mappings) / 100.0;
+                            sim = helper.scoreMatch(t, cand, mappings);
                         }
                         else {
-                            sim = helper.scoreMatch(t, cand) / 100.0;
+                            sim = helper.scoreMatch(t, cand);
                         }
                     }
                     else {
