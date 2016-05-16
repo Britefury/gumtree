@@ -173,32 +173,48 @@ public class GitRepoWalkerClient extends Client {
                             ObjectLoader newLoader = repository.open(diff.getNewId().toObjectId());
                             String oldText = new String(oldLoader.getBytes(), "UTF-8");
                             String newText = new String(newLoader.getBytes(), "UTF-8");
-                            DiffResults dres = diff(oldText, newText);
-                            diffCount++;
-                            int nA = dres.getSizeA(), nB = dres.getSizeB();
-//                            int nA = 0, nB = 0;
-                            if (jsonOut != null) {
-                                jsonOut.beginObject();
-                                jsonOut.name("src_path").value(diff.getOldPath());
-                                jsonOut.name("dst_path").value(diff.getNewPath());
-                                jsonOut.name("src_commit").value(parent.getId().getName());
-                                jsonOut.name("dst_commit").value(commit.getId().getName());
-                                jsonOut.name("n_A").value(nA);
-                                jsonOut.name("n_B").value(nB);
-                                jsonOut.name("n_matches").value(dres.mapping.size());
-                                jsonOut.name("n_actions").value(dres.actions.size());
-                                jsonOut.endObject();
+                            DiffResults dres = null;
+                            try {
+                                dres = diff(oldText, newText);
                             }
-                            if (ctype == DiffEntry.ChangeType.RENAME) {
-                                System.out.println(diff.getOldPath() + " -> " + diff.getNewPath() + " [ " +
-                                        parent.getId().getName() + " -> " + commit.getId().getName() +
-                                        " ]: |A| = " + nA + ", |B| = " + nB + ", |matches| = " +
-                                        dres.mapping.size() + ", |actions| = " + dres.actions.size());
-                            } else {
-                                System.out.println(diff.getOldPath() + " [ " +
-                                        parent.getId().getName() + " -> " + commit.getId().getName() +
-                                        " ]: |A| = " + nA + ", |B| = " + nB + ", |matches| = " +
-                                        dres.mapping.size() + ", |actions| = " + dres.actions.size());
+                            catch (Exception e) {
+                            }
+                            if (dres != null) {
+                                diffCount++;
+                                int nA = dres.getSizeA(), nB = dres.getSizeB();
+//                            int nA = 0, nB = 0;
+                                if (jsonOut != null) {
+                                    jsonOut.beginObject();
+                                    jsonOut.name("src_path").value(diff.getOldPath());
+                                    jsonOut.name("dst_path").value(diff.getNewPath());
+                                    jsonOut.name("src_commit").value(parent.getId().getName());
+                                    jsonOut.name("dst_commit").value(commit.getId().getName());
+                                    jsonOut.name("n_A").value(nA);
+                                    jsonOut.name("n_B").value(nB);
+                                    jsonOut.name("n_matches").value(dres.mapping.size());
+                                    jsonOut.name("n_actions").value(dres.actions.size());
+                                    jsonOut.endObject();
+                                }
+                                if (ctype == DiffEntry.ChangeType.RENAME) {
+                                    System.out.println(diff.getOldPath() + " -> " + diff.getNewPath() + " [ " +
+                                            parent.getId().getName() + " -> " + commit.getId().getName() +
+                                            " ]: |A| = " + nA + ", |B| = " + nB + ", |matches| = " +
+                                            dres.mapping.size() + ", |actions| = " + dres.actions.size());
+                                } else {
+                                    System.out.println(diff.getOldPath() + " [ " +
+                                            parent.getId().getName() + " -> " + commit.getId().getName() +
+                                            " ]: |A| = " + nA + ", |B| = " + nB + ", |matches| = " +
+                                            dres.mapping.size() + ", |actions| = " + dres.actions.size());
+                                }
+                            }
+                            else {
+                                if (ctype == DiffEntry.ChangeType.RENAME) {
+                                    System.out.println(diff.getOldPath() + " -> " + diff.getNewPath() + " [ " +
+                                            parent.getId().getName() + " -> " + commit.getId().getName() + " ]");
+                                } else {
+                                    System.out.println(diff.getOldPath() + " [ " +
+                                            parent.getId().getName() + " -> " + commit.getId().getName() + " ]");
+                                }
                             }
                         }
                     }
