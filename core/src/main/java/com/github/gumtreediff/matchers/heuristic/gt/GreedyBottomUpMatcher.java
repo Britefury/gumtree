@@ -22,7 +22,6 @@ package com.github.gumtreediff.matchers.heuristic.gt;
 
 import com.github.gumtreediff.matchers.Mapping;
 import com.github.gumtreediff.matchers.MappingStore;
-import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.matchers.heuristic.fgp.FingerprintMatchHelper;
 import com.github.gumtreediff.matchers.optimal.zs.ZsMatcher;
@@ -168,7 +167,7 @@ public class GreedyBottomUpMatcher extends Matcher {
     private List<ITree> getDstCandidates(ITree src) {
         List<ITree> seeds = new ArrayList<>();
         for (ITree c: src.getDescendants()) {
-            ITree m = mappings.getDst(c);
+            ITree m = mappings.getDstForSrc(c);
             if (m != null) seeds.add(m);
         }
         List<ITree> candidates = new ArrayList<>();

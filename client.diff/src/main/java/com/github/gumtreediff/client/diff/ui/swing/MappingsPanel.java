@@ -43,8 +43,6 @@ import javax.swing.tree.TreePath;
 import com.github.gumtreediff.actions.TreeClassifier;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.actions.RootsClassifier;
-import com.github.gumtreediff.actions.TreeClassifier;
-import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.tree.TreeContext;
@@ -139,7 +137,7 @@ public class MappingsPanel extends JPanel implements TreeSelectionListener {
             matchJTextArea = txtDst;
             if (mappings.hasSrc(sel)) {
                 isMapped = true;
-                match = mappings.getDst(sel);
+                match = mappings.getDstForSrc(sel);
             }
         } else {
             selJTextArea = txtDst;
@@ -147,7 +145,7 @@ public class MappingsPanel extends JPanel implements TreeSelectionListener {
             matchJTextArea = txtSrc;
             if (mappings.hasDst(sel)) {
                 isMapped = true;
-                match = mappings.getSrc(sel);
+                match = mappings.getSrcForDst(sel);
             }
         }
         try {

@@ -26,7 +26,6 @@ import java.util.Set;
 
 import com.github.gumtreediff.actions.model.Delete;
 import com.github.gumtreediff.actions.model.Action;
-import com.github.gumtreediff.actions.model.Delete;
 import com.github.gumtreediff.actions.model.Insert;
 import com.github.gumtreediff.actions.model.Move;
 import com.github.gumtreediff.actions.model.Update;
@@ -54,10 +53,10 @@ public class RootAndLeavesClassifier extends TreeClassifier {
                 srcDelTrees.add(a.getNode());
             } else if (a instanceof Update) {
                 srcUpdTrees.add(a.getNode());
-                dstUpdTrees.add(mappings.getDst(a.getNode()));
+                dstUpdTrees.add(mappings.getDstForSrc(a.getNode()));
             } else if (a instanceof Move) {
                 srcMvTrees.add(a.getNode());
-                dstMvTrees.add(mappings.getDst(a.getNode()));
+                dstMvTrees.add(mappings.getDstForSrc(a.getNode()));
             }
         }
 

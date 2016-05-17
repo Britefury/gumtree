@@ -30,8 +30,8 @@ import com.github.gumtreediff.tree.ITree;
 
 public class MappingStore implements Iterable<Mapping> {
 
-    private Map<ITree, ITree> srcs;
-    private Map<ITree, ITree> dsts;
+    private Map<ITree, ITree> srcToDst;
+    private Map<ITree, ITree> dstToSrc;
 
     public MappingStore(Set<Mapping> mappings) {
         this();
@@ -39,14 +39,14 @@ public class MappingStore implements Iterable<Mapping> {
     }
 
     public MappingStore() {
-        srcs = new  HashMap<>();
-        dsts = new HashMap<>();
+        srcToDst = new  HashMap<>();
+        dstToSrc = new HashMap<>();
     }
 
     public Set<Mapping> asSet() {
         Set<Mapping> mappings = new HashSet<>();
-        for (ITree src : srcs.keySet())
-            mappings.add(new Mapping(src, srcs.get(src)));
+        for (ITree src : srcToDst.keySet())
+            mappings.add(new Mapping(src, srcToDst.get(src)));
         return mappings;
     }
 
@@ -55,13 +55,13 @@ public class MappingStore implements Iterable<Mapping> {
     }
 
     public void link(ITree src, ITree dst) {
-        srcs.put(src, dst);
-        dsts.put(dst, src);
+        srcToDst.put(src, dst);
+        dstToSrc.put(dst, src);
     }
 
     public void unlink(ITree src, ITree dst) {
-        srcs.remove(src);
-        dsts.remove(dst);
+        srcToDst.remove(src);
+        dstToSrc.remove(dst);
     }
 
     public ITree firstMappedSrcParent(ITree src) {
@@ -88,24 +88,24 @@ public class MappingStore implements Iterable<Mapping> {
         }
     }
 
-    public ITree getDst(ITree src) {
-        return srcs.get(src);
+    public ITree getDstForSrc(ITree src) {
+        return srcToDst.get(src);
     }
 
-    public ITree getSrc(ITree dst) {
-        return dsts.get(dst);
+    public ITree getSrcForDst(ITree dst) {
+        return dstToSrc.get(dst);
     }
 
     public boolean hasSrc(ITree src) {
-        return srcs.containsKey(src);
+        return srcToDst.containsKey(src);
     }
 
     public boolean hasDst(ITree dst) {
-        return dsts.containsKey(dst);
+        return dstToSrc.containsKey(dst);
     }
 
     public boolean has(ITree src, ITree dst) {
-        return srcs.get(src) == dst;
+        return srcToDst.get(src) == dst;
     }
 
     @Override
@@ -114,7 +114,7 @@ public class MappingStore implements Iterable<Mapping> {
     }
 
     public int size() {
-        return srcs.size();
+        return srcToDst.size();
     }
 
     @Override

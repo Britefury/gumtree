@@ -97,7 +97,7 @@ public class ActionGenerator {
         for (ITree x: bfsDst) {
             ITree w = null;
             ITree y = x.getParent();
-            ITree z = newMappings.getSrc(y);
+            ITree z = newMappings.getSrcForDst(y);
 
             if (!newMappings.hasDst(x)) {
                 int k = findPos(x);
@@ -115,7 +115,7 @@ public class ActionGenerator {
                 z.getChildren().add(k, w);
                 w.setParent(z);
             } else {
-                w = newMappings.getSrc(x);
+                w = newMappings.getSrcForDst(x);
                 if (!x.equals(origDst)) { // TODO => x != origDst // Case of the root
                     ITree v = w.getParent();
                     if (!w.getLabel().equals(x.getLabel())) {
@@ -160,13 +160,13 @@ public class ActionGenerator {
         List<ITree> s1 = new ArrayList<>();
         for (ITree c: w.getChildren())
             if (newMappings.hasSrc(c))
-                if (x.getChildren().contains(newMappings.getDst(c)))
+                if (x.getChildren().contains(newMappings.getDstForSrc(c)))
                     s1.add(c);
 
         List<ITree> s2 = new ArrayList<>();
         for (ITree c: x.getChildren())
             if (newMappings.hasDst(c))
-                if (w.getChildren().contains(newMappings.getSrc(c)))
+                if (w.getChildren().contains(newMappings.getSrcForDst(c)))
                     s2.add(c);
 
         List<Mapping> lcs = lcs(s1, s2);
@@ -219,7 +219,7 @@ public class ActionGenerator {
         //if (v == null) throw new RuntimeException("No rightmost sibling in order");
         if (v == null) return 0;
 
-        ITree u = newMappings.getSrc(v);
+        ITree u = newMappings.getSrcForDst(v);
         // siblings = u.getParent().getChildren();
         // int upos = siblings.indexOf(u);
         int upos = u.positionInParent();
@@ -241,14 +241,14 @@ public class ActionGenerator {
         int[][] opt = new int[m + 1][n + 1];
         for (int i = m - 1; i >= 0; i--) {
             for (int j = n - 1; j >= 0; j--) {
-                if (newMappings.getSrc(y.get(j)).equals(x.get(i))) opt[i][j] = opt[i + 1][j + 1] + 1;
+                if (newMappings.getSrcForDst(y.get(j)).equals(x.get(i))) opt[i][j] = opt[i + 1][j + 1] + 1;
                 else  opt[i][j] = Math.max(opt[i + 1][j], opt[i][j + 1]);
             }
         }
 
         int i = 0, j = 0;
         while (i < m && j < n) {
-            if (newMappings.getSrc(y.get(j)).equals(x.get(i))) {
+            if (newMappings.getSrcForDst(y.get(j)).equals(x.get(i))) {
                 lcs.add(new Mapping(x.get(i), y.get(j)));
                 i++;
                 j++;

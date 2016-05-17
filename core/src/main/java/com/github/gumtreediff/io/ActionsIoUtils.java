@@ -26,7 +26,6 @@ import com.github.gumtreediff.matchers.Mapping;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.tree.TreeContext;
-import com.google.gson.internal.Excluder;
 import com.google.gson.stream.JsonWriter;
 
 import javax.xml.stream.XMLOutputFactory;
@@ -105,10 +104,10 @@ public final class ActionsIoUtils {
             for (Action a : actions) {
                 ITree src = a.getNode();
                 if (a instanceof Move) {
-                    ITree dst = mappings.getDst(src);
+                    ITree dst = mappings.getDstForSrc(src);
                     fmt.moveAction(src, dst.getParent(), ((Move) a).getPosition());
                 } else if (a instanceof Update) {
-                    ITree dst = mappings.getDst(src);
+                    ITree dst = mappings.getDstForSrc(src);
                     fmt.updateAction(src, dst);
                 } else if (a instanceof Insert) {
                     ITree dst = a.getNode();

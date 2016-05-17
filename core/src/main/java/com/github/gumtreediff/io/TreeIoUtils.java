@@ -398,11 +398,11 @@ public final class TreeIoUtils {
 
             if (isSrc)
                 searchOther = (tree) -> {
-                    return m.hasSrc(tree) ? m.getDst(tree) : null;
+                    return m.hasSrc(tree) ? m.getDstForSrc(tree) : null;
                 };
             else
                 searchOther = (tree) -> {
-                    return m.hasDst(tree) ? m.getSrc(tree) : null;
+                    return m.hasDst(tree) ? m.getSrcForDst(tree) : null;
                 };
         }
 

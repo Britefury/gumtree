@@ -27,10 +27,7 @@ import com.github.gumtreediff.actions.model.Delete;
 import com.github.gumtreediff.actions.model.Move;
 import com.github.gumtreediff.actions.model.Update;
 import com.github.gumtreediff.actions.model.Action;
-import com.github.gumtreediff.actions.model.Delete;
 import com.github.gumtreediff.actions.model.Insert;
-import com.github.gumtreediff.actions.model.Move;
-import com.github.gumtreediff.actions.model.Update;
 import com.github.gumtreediff.matchers.Mapping;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.TreeContext;
@@ -52,10 +49,10 @@ public class RootsClassifier extends TreeClassifier {
                 dstAddTrees.add(a.getNode());
             else if (a instanceof Update) {
                 srcUpdTrees.add(a.getNode());
-                dstUpdTrees.add(mappings.getDst(a.getNode()));
+                dstUpdTrees.add(mappings.getDstForSrc(a.getNode()));
             } else if (a instanceof Move) {
                 srcMvTrees.add(a.getNode());
-                dstMvTrees.add(mappings.getDst(a.getNode()));
+                dstMvTrees.add(mappings.getDstForSrc(a.getNode()));
             }
         }
     }

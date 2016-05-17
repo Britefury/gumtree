@@ -158,7 +158,7 @@ public class FeatureVectorTable {
         int additive = 0;
 
         for (ITree t : a.node.getDescendants()) {
-            ITree m = mappings.getDst(t);
+            ITree m = mappings.getDstForSrc(t);
             if (m != null && dstDescs.contains(m)) {
                 FGPNode x = mappingsA.get(t);
                 FGPNode y = mappingsB.get(m);

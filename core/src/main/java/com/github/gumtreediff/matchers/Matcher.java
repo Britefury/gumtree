@@ -21,7 +21,6 @@
 package com.github.gumtreediff.matchers;
 
 import com.github.gumtreediff.tree.ITree;
-import com.github.gumtreediff.tree.ITree;
 
 import java.util.HashSet;
 import java.util.List;
@@ -99,7 +98,7 @@ public abstract class Matcher {
         int common = 0;
 
         for (ITree t : src.getDescendants()) {
-            ITree m = mappings.getDst(t);
+            ITree m = mappings.getDstForSrc(t);
             if (m != null && dstDescs.contains(m))
                 common++;
         }

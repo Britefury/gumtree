@@ -7,9 +7,9 @@ import com.github.gumtreediff.tree.ITree;
 /**
  * Created by Geoff on 17/05/2016.
  */
-@Register(id = "fg")
-public class FingerprintMatcher extends AbstractFingerprintMatcher {
-    public FingerprintMatcher(ITree src, ITree dst, MappingStore store) {
+@Register(id = "fg-rng")
+public class FingerprintMatcherWithRandomisation extends AbstractFingerprintMatcher {
+    public FingerprintMatcherWithRandomisation(ITree src, ITree dst, MappingStore store) {
         super(src, dst, store);
     }
 
@@ -32,11 +32,11 @@ public class FingerprintMatcher extends AbstractFingerprintMatcher {
         long t3 = System.nanoTime();
         double topDownTime = (t3 - t2) * 1.0e-9;
 
-        bottomUpMatch(matchHelper, null, matchHelper.fgbTreeA, matchHelper.fgpTreeB);
+        ScoredNodeMapping mappingScorer = new ScoredNodeMapping(matchHelper.fgbTreeA, matchHelper.fgpTreeB, matchHelper);
+        bottomUpMatch(matchHelper, mappingScorer, matchHelper.fgbTreeA, matchHelper.fgpTreeB);
 
         long t4 = System.nanoTime();
         double bottomUpTime = (t4 - t3) * 1.0e-9;
 
 //        System.err.println("Fingerprint generation " + nTA + " x " + nTB + " nodes: " + fgTime + "s, top down " + topDownTime + "s, bottom up " + bottomUpTime + "s");
-    }
-}
+    }}
