@@ -8,6 +8,7 @@ import com.github.gumtreediff.matchers.optimal.zs.ZsMatcher;
 import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.tree.TreeUtils;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -311,19 +312,21 @@ abstract class AbstractFingerprintMatcher extends Matcher {
         if (mappingScorer != null) {
             double costBefore = mappingScorer.getCost();
 
-            mappingScorer.randomiseMapping(unmatchedNodesA, unmatchedNodesB, 10, 25);
+            // Randomise the mapping between unfixed notes
+            mappingScorer.randomiseMapping(unmatchedNodesA, unmatchedNodesB, 15, 35);
 
             double costAfter = mappingScorer.getCost();
 
-            if (costAfter < costBefore) {
-                for (FGPNode a: unmatchedNodesA) {
-                    ScoredNodeMapping.ScoredMapping mapping = mappingScorer.aIdToMapping[a.node.getId()];
-                    if (mapping != null) {
-                        FGPNode b = mapping.b;
-                        addMapping(a.node, b.node);
-                    }
+            // Copy over the randomised mappings
+            for (FGPNode a: unmatchedNodesA) {
+                ScoredNodeMapping.ScoredMapping mapping = mappingScorer.aIdToMapping[a.node.getId()];
+                if (mapping != null) {
+                    FGPNode b = mapping.b;
+                    addMapping(a.node, b.node);
                 }
+            }
 
+            if (costAfter < costBefore) {
                 System.err.println("++++ bottomUpMatch: Randomisation changed cost from " + costBefore + " to " + costAfter);
             }
             else {

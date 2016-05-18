@@ -30,7 +30,7 @@ public class ScoredNodeMapping {
                     // Labels don't match; increase cost
                     updateCost += 1.0;
                 }
-                connectionsCost -= computeConnectionsRetained(a, b);
+                moveCost += computeMoveCostDelta(a, b);
                 registered = true;
             }
         }
@@ -45,7 +45,7 @@ public class ScoredNodeMapping {
                     // Labels don't match; decrease cost
                     updateCost -= 1.0;
                 }
-                connectionsCost += computeConnectionsRetained(a, b);
+                moveCost -= computeMoveCostDelta(a, b);
                 registered = false;
             }
         }
@@ -54,7 +54,7 @@ public class ScoredNodeMapping {
     protected ScoredMapping aIdToMapping[], bIdToMapping[];
     protected FGPNode.NodeMapping nodesA, nodesB;
     protected boolean aFixed[], bFixed[];
-    protected double insertCost, deleteCost, updateCost, connectionsCost;
+    protected int insertCost, deleteCost, updateCost, moveCost;
 
     public ScoredNodeMapping(FGPNode treeA, FGPNode treeB, FingerprintMatchHelper helper) {
         int nA = treeA.node.getSize();
@@ -71,9 +71,9 @@ public class ScoredNodeMapping {
         // Initial insert cost; insert all nodes from b
         insertCost = nB;
         // No updates as of yet
-        updateCost = 0.0;
+        updateCost = 0;
         // Initial links cost; the number of parent->child links in both trees
-        connectionsCost = nA + nB - 2;
+        moveCost = 0;
     }
 
     public void addMappings(MappingStore mappings, boolean fixed) {
@@ -82,13 +82,28 @@ public class ScoredNodeMapping {
         }
     }
 
+    public int getNumMoves() {
+        int numMoves = 0;
+        for (ScoredMapping m: aIdToMapping) {
+            if (m != null) {
+                FGPNode a = m.a, b = m.b;
+                if (a.parent != null && b.parent != null) {
+                    if (!areNodesLinked(a.parent, b.parent)) {
+                        numMoves++;
+                    }
+                }
+            }
+        }
+        return numMoves;
+    }
+
     public double getCost() {
-        return deleteCost + insertCost + updateCost + connectionsCost;
+        return deleteCost + insertCost + updateCost + moveCost * 3.0;
     }
 
     public void randomiseMapping(ArrayList<FGPNode> nodesA, ArrayList<FGPNode> nodesB,
                                  int nSwapsPerNode, int nTestsPerSwap) {
-        Random rng = new Random();
+        Random rng = new Random(12345);
         int nA = nodesA.size(), nB = nodesB.size(), nNodes = nA + nB;
         for (int i = 0; i < nNodes * nSwapsPerNode; i++) {
             int nodeId = rng.nextInt(nNodes);
@@ -99,10 +114,16 @@ public class ScoredNodeMapping {
                 for (int j = 0; j < nTestsPerSwap; j++) {
                     int bNdx = rng.nextInt(nodesB.size());
                     FGPNode b = nodesB.get(bNdx);
-                    double delta = computeCompleteLinkDeltaCost(a, b);
-                    if (delta < bestDeltaCost) {
-                        bestB = b;
-                        bestDeltaCost = delta;
+                    FGPNode existingB = getBForA(a);
+                    if (existingB != null && existingB.parent != null && existingB.parent == b.parent) {
+                        // Do not re-order
+                    }
+                    else {
+                        double delta = computeCompleteLinkDeltaCost(a, b);
+                        if (delta < bestDeltaCost) {
+                            bestB = b;
+                            bestDeltaCost = delta;
+                        }
                     }
                 }
 
@@ -117,10 +138,16 @@ public class ScoredNodeMapping {
                 for (int j = 0; j < nTestsPerSwap; j++) {
                     int aNdx = rng.nextInt(nodesA.size());
                     FGPNode a = nodesA.get(aNdx);
-                    double delta = computeCompleteLinkDeltaCost(a, b);
-                    if (delta < bestDeltaCost) {
-                        bestA = a;
-                        bestDeltaCost = delta;
+                    FGPNode existingA = getAForB(b);
+                    if (existingA != null && existingA.parent != null && existingA.parent == a.parent) {
+                        // Do not re-order
+                    }
+                    else {
+                        double delta = computeCompleteLinkDeltaCost(a, b);
+                        if (delta < bestDeltaCost) {
+                            bestA = a;
+                            bestDeltaCost = delta;
+                        }
                     }
                 }
 
@@ -185,21 +212,37 @@ public class ScoredNodeMapping {
             // Labels don't match; update cost of 1.0
             deltaCost += 1.0;
         }
-        deltaCost -= computeConnectionsRetained(a, b);
+        deltaCost += computeMoveCostDelta(a, b) * 3.0;
         return deltaCost;
     }
 
-    private double computeConnectionsRetained(FGPNode a, FGPNode b) {
-        int score = 0;
+    private double computeMoveCostDelta(FGPNode a, FGPNode b) {
+        int deltaCost = 0;
         boolean aHasParent = a.parent != null;
         boolean bHasParent = b.parent != null;
-        if (aHasParent && bHasParent) {
+        if (aHasParent != bHasParent) {
+            deltaCost += 1;
+        }
+        else if (aHasParent && bHasParent) {
             // Both `a` and `b` have parent nodes
-            if (areNodesLinked(a.parent, b.parent)) {
+            if (!areNodesLinked(a.parent, b.parent)) {
                 // Parent nodes of `a` and `b` are already linked;
                 // the link is retained by linking `a` and `b`
-                score += 2;
+                deltaCost += 1;
             }
+
+//            FGPNode adjA[] = getAdjacentNodes(a);
+//            FGPNode adjB[] = getAdjacentNodes(b);
+//            if (adjA[0] != null && adjB[0] != null) {
+//                if (!areNodesLinked(adjA[0], adjB[0])) {
+//                    deltaCost += 1;
+//                }
+//            }
+//            if (adjA[1] != null && adjB[1] != null) {
+//                if (!areNodesLinked(adjA[1], adjB[1])) {
+//                    deltaCost += 1;
+//                }
+//            }
         }
         for (FGPNode childA: a.children) {
             FGPNode childB = getBForA(childA);
@@ -207,11 +250,11 @@ public class ScoredNodeMapping {
                 if (childB.parent == b) {
                     // A child of `a` is linked to a child of `b`, so
                     // a link is retained
-                    score += 2;
+                    deltaCost -= 1;
                 }
             }
         }
-        return score;
+        return deltaCost;
     }
 
     private boolean areNodesLinked(FGPNode a, FGPNode b) {
@@ -228,5 +271,18 @@ public class ScoredNodeMapping {
     private FGPNode getAForB(FGPNode b) {
         ScoredMapping mappingB = bIdToMapping[b.node.getId()];
         return mappingB != null ? mappingB.a : null;
+    }
+
+    private FGPNode[] getAdjacentNodes(FGPNode x) {
+        if (x.parent == null) {
+            return new FGPNode[] {null, null};
+        }
+        else {
+            int i = java.util.Arrays.asList(x.parent.children).indexOf(x);
+            int p = i - 1, n = i + 1;
+            FGPNode prev = p >= 0 && p < x.parent.children.length ? x.parent.children[p] : null;
+            FGPNode next = n < x.parent.children.length ? x.parent.children[n] : null;
+            return new FGPNode[] {prev, next};
+        }
     }
 }
