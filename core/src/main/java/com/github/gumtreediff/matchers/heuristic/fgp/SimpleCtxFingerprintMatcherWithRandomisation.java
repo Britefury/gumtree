@@ -7,9 +7,9 @@ import com.github.gumtreediff.tree.ITree;
 /**
  * Created by Geoff on 17/05/2016.
  */
-@Register(id = "fg")
-public class FingerprintMatcher extends AbstractFingerprintMatcher {
-    public FingerprintMatcher(ITree src, ITree dst, MappingStore store) {
+@Register(id = "fg-rng")
+public class SimpleCtxFingerprintMatcherWithRandomisation extends AbstractSimpleCtxFingerprintMatcher {
+    public SimpleCtxFingerprintMatcherWithRandomisation(ITree src, ITree dst, MappingStore store) {
         super(src, dst, store);
     }
 
@@ -19,24 +19,24 @@ public class FingerprintMatcher extends AbstractFingerprintMatcher {
 
         FingerprintMatchHelper matchHelper = new FingerprintMatchHelper(src, dst);
 
-        int nTA = matchHelper.fgbTreeA.subtreeSize;
+        int nTA = matchHelper.fgpTreeA.subtreeSize;
         int nTB = matchHelper.fgpTreeB.subtreeSize;
 
         long t2 = System.nanoTime();
         double fgTime = (t2 - t1) * 1.0e-9;
 
-        topDownMatch(matchHelper.fgbTreeA, matchHelper.fgpTreeB, 0);
+        topDownMatch(matchHelper.fgpTreeA, matchHelper.fgpTreeB, 0);
 
 //        int nTopDown = mappings.asSet().size();
 
         long t3 = System.nanoTime();
         double topDownTime = (t3 - t2) * 1.0e-9;
 
-        bottomUpMatch(matchHelper, null, matchHelper.fgbTreeA, matchHelper.fgpTreeB);
+        ScoredNodeMapping mappingScorer = new ScoredNodeMapping(matchHelper.fgpTreeA, matchHelper.fgpTreeB, matchHelper);
+        bottomUpMatch(matchHelper, mappingScorer, matchHelper.fgpTreeA, matchHelper.fgpTreeB);
 
         long t4 = System.nanoTime();
         double bottomUpTime = (t4 - t3) * 1.0e-9;
 
 //        System.err.println("Fingerprint generation " + nTA + " x " + nTB + " nodes: " + fgTime + "s, top down " + topDownTime + "s, bottom up " + bottomUpTime + "s");
-    }
-}
+    }}

@@ -38,7 +38,7 @@ public class FGPNode {
     protected FGPNode parent;
     protected FGPNode children[];
 
-    protected int depth = 0, subtreeSize = 0;
+    protected int depth = 0, subtreeSize = 0, distFromRoot = 0;
     protected boolean matched = false;
 
     private String shapeSha, contentSha;
@@ -46,6 +46,8 @@ public class FGPNode {
     protected FeatureVector nodeFeatures = null;
     protected FeatureVector leftSiblingsFeats = null, rightSiblingsFeats = null, parentContainmentFeatures = null;
     protected double leftTree, rightTree;
+
+    protected int matchId = -1;
 
 
     public FGPNode(ITree node, NodeMapping mapping) {
@@ -67,6 +69,28 @@ public class FGPNode {
 
         depth += 1;
         subtreeSize += 1;
+    }
+
+
+    public void initDistFromRoot() {
+        setDistFromRoot(0);
+    }
+
+    private void setDistFromRoot(int distFromRoot) {
+        this.distFromRoot = distFromRoot;
+
+        for (FGPNode n: children) {
+            n.setDistFromRoot(distFromRoot + 1);
+        }
+    }
+
+
+    public int getMatchId() {
+        return matchId;
+    }
+
+    public void setMatchId(int matchId) {
+        this.matchId = matchId;
     }
 
 

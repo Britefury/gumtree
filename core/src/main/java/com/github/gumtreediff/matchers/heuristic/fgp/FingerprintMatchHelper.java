@@ -3,24 +3,25 @@ package com.github.gumtreediff.matchers.heuristic.fgp;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.tree.ITree;
 
-import java.util.Map;
-
 /**
  * Created by Geoff on 07/04/2016.
  */
 public class FingerprintMatchHelper {
     public FGPNode.NodeMapping mappingA, mappingB;
-    public FGPNode fgbTreeA, fgpTreeB;
+    public FGPNode fgpTreeA, fgpTreeB;
     public FeatureVectorTable fv;
 
     public FingerprintMatchHelper(ITree a, ITree b) {
         mappingA = new FGPNode.NodeMapping();
         mappingB = new FGPNode.NodeMapping();
-        fgbTreeA = new FGPNode(a, mappingA);
+        fgpTreeA = new FGPNode(a, mappingA);
         fgpTreeB = new FGPNode(b, mappingB);
 
+        fgpTreeA.initDistFromRoot();
+        fgpTreeB.initDistFromRoot();
+
         fv = new FeatureVectorTable();
-        fv.addTree(fgbTreeA);
+        fv.addTree(fgpTreeA);
         fv.addTree(fgpTreeB);
     }
 

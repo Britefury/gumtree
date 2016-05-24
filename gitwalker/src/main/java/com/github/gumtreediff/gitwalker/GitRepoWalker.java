@@ -4,7 +4,7 @@ import com.github.gumtreediff.actions.ActionGenerator;
 import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.matchers.MappingStore;
-import com.github.gumtreediff.matchers.heuristic.fgp.FingerprintMatcher;
+import com.github.gumtreediff.matchers.heuristic.fgp.SimpleCtxFingerprintMatcher;
 import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.tree.TreeContext;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -64,7 +64,7 @@ public class GitRepoWalker {
         tA.validate();
         tB.validate();
         MappingStore mappings = new MappingStore();
-        FingerprintMatcher matcher = new FingerprintMatcher(tA.getRoot(), tB.getRoot(), mappings);
+        SimpleCtxFingerprintMatcher matcher = new SimpleCtxFingerprintMatcher(tA.getRoot(), tB.getRoot(), mappings);
         matcher.match();
         ActionGenerator actionGen = new ActionGenerator(tA.getRoot(), tB.getRoot(), mappings);
         List<Action> actions = actionGen.generate();
