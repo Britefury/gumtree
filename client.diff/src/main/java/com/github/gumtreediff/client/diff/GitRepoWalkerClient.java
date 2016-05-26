@@ -1,7 +1,7 @@
 package com.github.gumtreediff.client.diff;
 
 import com.github.gumtreediff.actions.ActionGenerator;
-import com.github.gumtreediff.actions.model.Action;
+import com.github.gumtreediff.actions.model.*;
 import com.github.gumtreediff.client.Client;
 import com.github.gumtreediff.client.Option;
 import com.github.gumtreediff.client.Register;
@@ -81,12 +81,30 @@ public class GitRepoWalkerClient extends Client {
         ITree a, b;
         MappingStore mapping;
         List<Action> actions;
+        int numDeletes = 0, numInserts = 0, numMoves = 0, numUpdates = 0;
+        double matchTime;
 
-        public DiffResults(ITree a, ITree b, MappingStore mapping, List<Action> actions) {
+        public DiffResults(ITree a, ITree b, MappingStore mapping, List<Action> actions, double matchTime) {
             this.a = a;
             this.b = b;
             this.mapping = mapping;
             this.actions = actions;
+            this.matchTime = matchTime;
+
+            for (Action action: actions) {
+                if (action instanceof Delete) {
+                    numDeletes++;
+                }
+                else if (action instanceof Insert) {
+                    numInserts++;
+                }
+                else if (action instanceof Move) {
+                    numMoves++;
+                }
+                else if (action instanceof Update) {
+                    numUpdates++;
+                }
+            }
         }
 
         public int getSizeA() {
@@ -95,6 +113,50 @@ public class GitRepoWalkerClient extends Client {
 
         public int getSizeB() {
             return b.getSize();
+        }
+
+        public ITree getA() {
+            return a;
+        }
+
+        public ITree getB() {
+            return b;
+        }
+
+        public MappingStore getMapping() {
+            return mapping;
+        }
+
+        public int getNumMatches() {
+            return mapping.size();
+        }
+
+        public List<Action> getActions() {
+            return actions;
+        }
+
+        public int getNumActions() {
+            return actions.size();
+        }
+
+        public int getNumDeletes() {
+            return numDeletes;
+        }
+
+        public int getNumInserts() {
+            return numInserts;
+        }
+
+        public int getNumMoves() {
+            return numMoves;
+        }
+
+        public int getNumUpdates() {
+            return numUpdates;
+        }
+
+        public double getMatchTime() {
+            return matchTime;
         }
     }
 
@@ -142,11 +204,14 @@ public class GitRepoWalkerClient extends Client {
         }
         tA.validate();
         tB.validate();
+        long t1 = System.nanoTime();
         Matcher matcher = matchTrees(tA, tB);
+        long t2 = System.nanoTime();
+        double matchTime = (t2 - t1) * 1.0e-9;
         MappingStore mappings = matcher.getMappings();
         ActionGenerator actionGen = new ActionGenerator(tA.getRoot(), tB.getRoot(), mappings);
         List<Action> actions = actionGen.generate();
-        return new DiffResults(tA.getRoot(), tB.getRoot(), mappings, actions);
+        return new DiffResults(tA.getRoot(), tB.getRoot(), mappings, actions, matchTime);
     }
 
     private void walkRepo(Repository repository, RevWalk walk, JsonWriter jsonOut) throws IOException {
@@ -191,20 +256,30 @@ public class GitRepoWalkerClient extends Client {
                                     jsonOut.name("dst_commit").value(commit.getId().getName());
                                     jsonOut.name("n_A").value(nA);
                                     jsonOut.name("n_B").value(nB);
-                                    jsonOut.name("n_matches").value(dres.mapping.size());
-                                    jsonOut.name("n_actions").value(dres.actions.size());
+                                    jsonOut.name("n_matches").value(dres.getNumMatches());
+                                    jsonOut.name("n_actions").value(dres.getNumActions());
+                                    jsonOut.name("n_deletes").value(dres.getNumDeletes());
+                                    jsonOut.name("n_inserts").value(dres.getNumInserts());
+                                    jsonOut.name("n_moves").value(dres.getNumMoves());
+                                    jsonOut.name("n_updates").value(dres.getNumUpdates());
+                                    jsonOut.name("match_time").value(dres.getMatchTime());
+
                                     jsonOut.endObject();
                                 }
                                 if (ctype == DiffEntry.ChangeType.RENAME) {
                                     System.out.println(diff.getOldPath() + " -> " + diff.getNewPath() + " [ " +
                                             parent.getId().getName() + " -> " + commit.getId().getName() +
                                             " ]: |A| = " + nA + ", |B| = " + nB + ", |matches| = " +
-                                            dres.mapping.size() + ", |actions| = " + dres.actions.size());
+                                            dres.getNumMatches() + ", |actions| = " + dres.getNumActions() +
+                                            " (del " + dres.getNumDeletes() + ", ins " + dres.getNumInserts() +
+                                            ", mov " + dres.getNumMoves() + ", upd " + dres.getNumUpdates() + ")");
                                 } else {
                                     System.out.println(diff.getOldPath() + " [ " +
                                             parent.getId().getName() + " -> " + commit.getId().getName() +
                                             " ]: |A| = " + nA + ", |B| = " + nB + ", |matches| = " +
-                                            dres.mapping.size() + ", |actions| = " + dres.actions.size());
+                                            dres.getNumMatches() + ", |actions| = " + dres.getNumActions() +
+                                            " (del " + dres.getNumDeletes() + ", ins " + dres.getNumInserts() +
+                                            ", mov " + dres.getNumMoves() + ", upd " + dres.getNumUpdates() + ")");
                                 }
                             }
                             else {

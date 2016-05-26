@@ -25,7 +25,7 @@ public class SimpleCtxFingerprintMatcher extends AbstractSimpleCtxFingerprintMat
         long t2 = System.nanoTime();
         double fgTime = (t2 - t1) * 1.0e-9;
 
-        topDownMatch(matchHelper.fgpTreeA, matchHelper.fgpTreeB, 0);
+        topDownMatch(matchHelper.fgpTreeA, matchHelper.fgpTreeB, 1);
 
 //        int nTopDown = mappings.asSet().size();
 

@@ -41,6 +41,34 @@ public class FGPMatchTable {
         return (x.getMatchId() * nB + y.getMatchId()) * 3 + simType;
     }
 
+    private double computeContextSimilarity(FGPNode x, FGPNode y, int simType) {
+        double contextSim = 1.0;
+        if (x.distFromRoot == y.distFromRoot) {
+            if (x.parent != null || y.parent != null) {
+                contextSim = computeSimilarity(x.parent, y.parent, simType);
+            }
+        }
+        else if (x.distFromRoot > y.distFromRoot) {
+            if (y.parent == null) {
+                contextSim = computeSimilarity(x.parent, y, simType);
+            }
+            else {
+                contextSim = Math.max(computeSimilarity(x.parent, y, simType),
+                        computeSimilarity(x.parent, y.parent, simType));
+            }
+        }
+        else if (x.distFromRoot < y.distFromRoot) {
+            if (x.parent == null) {
+                contextSim = computeSimilarity(x, y.parent, simType);
+            }
+            else {
+                contextSim = Math.max(computeSimilarity(x, y.parent, simType),
+                        computeSimilarity(x.parent, y.parent, simType));
+            }
+        }
+        return contextSim;
+    }
+
     private double computeSimilarity(FGPNode x, FGPNode y, int simType) {
         int ndx = index(x, y, simType);
         double score = scores[ndx];
@@ -61,30 +89,7 @@ public class FGPMatchTable {
                 localSim = x.nodeFeatures.jaccardSimilarityUpperBound(y.nodeFeatures);
             }
 
-            double contextSim = 1.0;
-            if (x.distFromRoot == y.distFromRoot) {
-                if (x.parent != null || y.parent != null) {
-                    contextSim = computeSimilarity(x.parent, y.parent, simType);
-                }
-            }
-            else if (x.distFromRoot > y.distFromRoot) {
-                if (y.parent == null) {
-                    contextSim = computeSimilarity(x.parent, y, simType);
-                }
-                else {
-                    contextSim = Math.max(computeSimilarity(x.parent, y, simType),
-                            computeSimilarity(x.parent, y.parent, simType));
-                }
-            }
-            else if (x.distFromRoot < y.distFromRoot) {
-                if (x.parent == null) {
-                    contextSim = computeSimilarity(x, y.parent, simType);
-                }
-                else {
-                    contextSim = Math.max(computeSimilarity(x, y.parent, simType),
-                            computeSimilarity(x.parent, y.parent, simType));
-                }
-            }
+            double contextSim = computeContextSimilarity(x, y, simType);
             score = contextSim * localSim;
             scores[ndx] = score;
             return score;
@@ -106,5 +111,13 @@ public class FGPMatchTable {
 
     public double inContextSimilarity(FGPNode x, FGPNode y) {
         return computeSimilarity(x, y, SIMTYPE_JACCARD);
+    }
+
+    public double contextSimilarityUpperBound(FGPNode x, FGPNode y) {
+        return computeContextSimilarity(x, y, SIMTYPE_UPPERBOUND);
+    }
+
+    public double contextSimilarity(FGPNode x, FGPNode y) {
+        return computeContextSimilarity(x, y, SIMTYPE_JACCARD);
     }
 }

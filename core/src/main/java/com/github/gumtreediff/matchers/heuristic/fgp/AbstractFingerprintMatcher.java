@@ -203,7 +203,7 @@ abstract class AbstractFingerprintMatcher extends Matcher {
         queue.addLast(tree);
         while (!queue.isEmpty()) {
             FGPNode node = queue.removeFirst();
-            if (!node.matched && node.node.getHeight() >= minHeight) {
+            if (!node.matched && node.depth >= minHeight) {
                 nodes.add(node);
                 queue.addAll(Arrays.asList(node.children));
             }
