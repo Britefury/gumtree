@@ -142,9 +142,17 @@ public class ActionGenerator {
         }
 
 
-        for (ITree w : newSrc.postOrder()) {
-            if (!newMappings.hasSrc(w)) {
-                actions.add(new Delete(origSrcTrees.get(w.getId())));
+//        for (ITree w : newSrc.postOrder()) {
+//            if (!newMappings.hasSrc(w)) {
+//                actions.add(new Delete(origSrcTrees.get(w.getId())));
+//                //w.getParent().getChildren().remove(w);
+//            }
+//        }
+
+        for (ITree targetInOrigSrc: origSrc.postOrder()) {
+            ITree targetInNewSrc = cpySrcTrees.get(targetInOrigSrc.getId());
+            if (!newMappings.hasSrc(targetInNewSrc)) {
+                actions.add(new Delete(origSrcTrees.get(targetInNewSrc.getId())));
                 //w.getParent().getChildren().remove(w);
             }
         }

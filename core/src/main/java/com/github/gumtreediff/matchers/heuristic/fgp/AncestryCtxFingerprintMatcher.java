@@ -5,6 +5,7 @@ import com.github.gumtreediff.matchers.Register;
 import com.github.gumtreediff.tree.ITree;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.PriorityQueue;
 
 /**
@@ -13,6 +14,17 @@ import java.util.PriorityQueue;
 @Register(id = "fg-ctx")
 public class AncestryCtxFingerprintMatcher extends AbstractFingerprintMatcher {
     private static int BOTTOM_UP_HEIGHT_THRESHOLD = 2;
+
+    private static double LOCAL_SIM_THRESHOLD = 0.2;
+
+
+    static {
+        try {
+            LOCAL_SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.fg.local_sim", "0.2"));
+        } catch (NumberFormatException e) {
+            LOCAL_SIM_THRESHOLD = 0.2;
+        }
+    }
 
 
     public AncestryCtxFingerprintMatcher(ITree src, ITree dst, MappingStore store) {
@@ -46,8 +58,6 @@ public class AncestryCtxFingerprintMatcher extends AbstractFingerprintMatcher {
 //        System.err.println("Fingerprint generation " + nTA + " x " + nTB + " nodes: " + fgTime + "s, top down " + topDownTime + "s, bottom up " + bottomUpTime + "s");
     }
 
-
-    private static final double LOCAL_SIM_THRESHOLD = 0.2;
 
 
     private void bottomUpMatch(FingerprintMatchHelper matchHelper, FGPNode treeA, FGPNode treeB) {
