@@ -23,7 +23,6 @@ package com.github.gumtreediff.gen.jdt;
 
 import com.github.gumtreediff.gen.Register;
 
-@Register(id = "java-jdt-gt", accept = "\\.java$" )
 public class JdtTreeGenerator extends AbstractJdtTreeGenerator {
 
     @Override

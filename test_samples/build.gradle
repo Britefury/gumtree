@@ -1,4 +1,4 @@
-description = 'Git repository walker'
+description = 'Gumtree test samples'
 
 repositories {
     mavenCentral()

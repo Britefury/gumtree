@@ -5,7 +5,7 @@ dependencies {
 	compile project(':core')
 	compile project(':client')
 	compile project(':client.diff')
-	compile project(':gitwalker')
+	compile project(':test_samples')
 	compile project(':gen.antlr')
 	compile project(':gen.antlr-antlr')
 	compile project(':gen.antlr-css')

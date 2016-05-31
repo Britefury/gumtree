@@ -1,4 +1,4 @@
-package com.github.gumtreediff.gitwalker;
+package com.github.gumtreediff.test_samples;
 
 import com.github.gumtreediff.actions.ActionGenerator;
 import com.github.gumtreediff.actions.model.Action;
