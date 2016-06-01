@@ -29,6 +29,7 @@ public class JdtTreeAndTokenGenerator extends TreeGenerator {
         if (!OPTIONS_INITIALISED) {
             String simplifyProp = System.getProperty("gumtree.gen.jdt.simplify");
             if (simplifyProp != null) {
+                System.err.println("Setting gumtree.gen.jdt.simplify is " + simplifyProp);
                 SIMPLIFY = Boolean.parseBoolean(simplifyProp);
             }
             OPTIONS_INITIALISED = true;

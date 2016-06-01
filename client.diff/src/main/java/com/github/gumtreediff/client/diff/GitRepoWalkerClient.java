@@ -5,6 +5,8 @@ import com.github.gumtreediff.actions.model.*;
 import com.github.gumtreediff.client.Client;
 import com.github.gumtreediff.client.Option;
 import com.github.gumtreediff.client.Register;
+import com.github.gumtreediff.gen.TreeGenerator;
+import com.github.gumtreediff.gen.jdt.JdtTreeAndTokenGenerator;
 import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
@@ -178,6 +180,7 @@ public class GitRepoWalkerClient extends Client {
         }
     }
 
+
     protected Matcher matchTrees(TreeContext src, TreeContext dst) {
         Matchers matchers = Matchers.getInstance();
         Matcher matcher = (opts.matcher == null)
@@ -192,7 +195,7 @@ public class GitRepoWalkerClient extends Client {
     protected DiffResults diff(String contentA, String contentB) {
         Reader rA = new StringReader(contentA);
         Reader rB = new StringReader(contentB);
-        JdtTreeGenerator gen = new JdtTreeGenerator();
+        JdtTreeAndTokenGenerator gen = new JdtTreeAndTokenGenerator();
         TreeContext tA = null;
         TreeContext tB = null;
         try {
