@@ -24,7 +24,11 @@ public class JdtTreeAndTokenGenerator extends TreeGenerator {
     private static boolean SIMPLIFY = false;
 
     static {
-        SIMPLIFY = Boolean.parseBoolean(System.getProperty("gumtree.gen.jdt.simplify", "false"));
+        String simplifyProp = System.getProperty("gumtree.gen.jdt.simplify");
+        if (simplifyProp != null) {
+            System.err.println("Setting gumtree.gen.jdt.simplify to " + simplifyProp);
+            SIMPLIFY = Boolean.parseBoolean(simplifyProp);
+        }
     }
 
 
