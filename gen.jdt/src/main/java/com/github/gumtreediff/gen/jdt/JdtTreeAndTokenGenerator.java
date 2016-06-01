@@ -21,13 +21,17 @@ import java.util.Map;
  */
 @Register(id = "java-jdt-gt", accept = "\\.java$" )
 public class JdtTreeAndTokenGenerator extends TreeGenerator {
+    private static boolean OPTIONS_INITIALISED = false;
+
     private static boolean SIMPLIFY = false;
 
-    static {
-        String simplifyProp = System.getProperty("gumtree.gen.jdt.simplify");
-        if (simplifyProp != null) {
-            System.err.println("Setting gumtree.gen.jdt.simplify to " + simplifyProp);
-            SIMPLIFY = Boolean.parseBoolean(simplifyProp);
+    private static void initOptions() {
+        if (!OPTIONS_INITIALISED) {
+            String simplifyProp = System.getProperty("gumtree.gen.jdt.simplify");
+            if (simplifyProp != null) {
+                SIMPLIFY = Boolean.parseBoolean(simplifyProp);
+            }
+            OPTIONS_INITIALISED = true;
         }
     }
 
@@ -52,6 +56,8 @@ public class JdtTreeAndTokenGenerator extends TreeGenerator {
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public TreeContext generate(Reader r) throws IOException {
+        initOptions();
+
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
         Map pOptions = JavaCore.getOptions();

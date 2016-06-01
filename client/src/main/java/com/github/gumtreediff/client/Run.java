@@ -45,6 +45,7 @@ public class Run {
                         @Override
                         protected void process(String name, String[] args) {
                             String key = args[0].startsWith("gumtree.") ? args[0] : "gumtree." + args[0];
+                            System.err.println("Setting property " + key + " to " + args[1]);
                             System.setProperty(key, args[1]);
                         }
                     },
