@@ -111,6 +111,24 @@ public class FeatureVectorTable {
                 a.parentContainmentFeatures.jaccardSimilarity(b.parentContainmentFeatures) * 0.2*/;
     }
 
+    public static double costMatchContext(FGPNode a, FGPNode b) {
+        double leftCost = Math.max(a.leftTree, b.leftTree) - Math.min(a.leftTree, b.leftTree);
+        double rightCost = Math.max(a.rightTree, b.rightTree) - Math.min(a.rightTree, b.rightTree);
+        return leftCost * 0.005 + rightCost * 0.005 +
+                a.leftSiblingsFeats.cost(b.leftSiblingsFeats) * 0.05 +
+                a.rightSiblingsFeats.cost(b.rightSiblingsFeats) * 0.05/* +
+                a.parentContainmentFeatures.jaccardSimilarity(b.parentContainmentFeatures) * 0.2*/;
+    }
+
+    public static double costMatchContextLowerBound(FGPNode a, FGPNode b) {
+        double leftCost = Math.max(a.leftTree, b.leftTree) - Math.min(a.leftTree, b.leftTree);
+        double rightCost = Math.max(a.rightTree, b.rightTree) - Math.min(a.rightTree, b.rightTree);
+        return leftCost * 0.005 + rightCost * 0.005 +
+                a.leftSiblingsFeats.costLowerBound(b.leftSiblingsFeats) * 0.05 +
+                a.rightSiblingsFeats.costLowerBound(b.rightSiblingsFeats) * 0.05/* +
+                a.parentContainmentFeatures.jaccardSimilarity(b.parentContainmentFeatures) * 0.2*/;
+    }
+
 //    public static double scoreMatchContext(FGPNode a, FGPNode b) {
 //        return a.leftTreeFeats.jaccardSimilarity(b.leftTreeFeats) +
 //                a.rightTreeFeats.jaccardSimilarity(b.rightTreeFeats) +
@@ -136,6 +154,21 @@ public class FeatureVectorTable {
     public static double scoreMatchUpperBound(FGPNode a, FGPNode b) {
         return a.nodeFeatures.jaccardSimilarityUpperBound(b.nodeFeatures) * 1.0 +
                 scoreMatchContextUpperBound(a, b);
+    }
+
+    public static double costMatch(FGPNode a, FGPNode b, FGPNode.NodeMapping mappingsA, FGPNode.NodeMapping mappingsB,
+                                    MappingStore mappings) {
+        double cost = a.nodeFeatures.cost(b.nodeFeatures);
+        if (mappingsA != null && mappingsB != null && mappings != null) {
+            cost -= matchAdditive(a, b, mappingsA, mappingsB, mappings);
+        }
+        return costMatchContext(a, b) +
+                cost * 1.0;
+    }
+
+    public static double costMatchLowerBound(FGPNode a, FGPNode b) {
+        return a.nodeFeatures.costLowerBound(b.nodeFeatures) * 1.0 +
+                costMatchContextLowerBound(a, b);
     }
 
     public static void logMatch(FGPNode a, FGPNode b, FGPNode.NodeMapping mappingsA, FGPNode.NodeMapping mappingsB,

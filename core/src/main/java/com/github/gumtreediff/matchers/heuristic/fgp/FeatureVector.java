@@ -116,6 +116,13 @@ public class FeatureVector {
     }
 
 
+    /**
+     * Create an iterable that extracts values from @this and @b. It generates 3-element
+     * int[] arrays, each of which has the form `new int[] {index, value_from_this, value_from_b}`
+     *
+     * @param b another feature vector
+     * @return an iterable
+     */
     public Iterable<int[]> pairIter(FeatureVector b) {
         return new Iterable<int[]>() {
             @Override
@@ -212,6 +219,19 @@ public class FeatureVector {
         }
     }
 
+
+    public double cost(FeatureVector b) {
+        double cost = 0.0;
+        for (int iab[]: pairIter(b)) {
+            double c = Math.max(iab[1], iab[2]) - Math.min(iab[1], iab[2]);
+            cost += c;
+        }
+        return cost;
+    }
+
+    public double costLowerBound(FeatureVector b) {
+        return Math.max(sum, b.sum) - Math.min(sum, b.sum);
+    }
 
     public FeatureVector add(FeatureVector b) {
         ArrayList<Integer> ndx = new ArrayList<>();

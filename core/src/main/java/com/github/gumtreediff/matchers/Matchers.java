@@ -23,6 +23,7 @@ package com.github.gumtreediff.matchers;
 import com.github.gumtreediff.gen.Registry;
 import com.github.gumtreediff.matchers.heuristic.LcsMatcher;
 import com.github.gumtreediff.matchers.heuristic.fgp.AncestryCtxFingerprintMatcher;
+import com.github.gumtreediff.matchers.heuristic.fgp.SimpleCtxFingerprintByCostMatcher;
 import com.github.gumtreediff.matchers.heuristic.fgp.SimpleCtxFingerprintMatcher;
 import com.github.gumtreediff.matchers.heuristic.fgp.SimpleCtxFingerprintMatcherWithRandomisation;
 import com.github.gumtreediff.matchers.optimal.MemoisedMatcher;
@@ -54,6 +55,7 @@ public class Matchers extends Registry.NamedRegistry<String, Matcher, Register> 
         install(SimpleCtxFingerprintMatcher.class);
         install(SimpleCtxFingerprintMatcherWithRandomisation.class);
         install(AncestryCtxFingerprintMatcher.class);
+        install(SimpleCtxFingerprintByCostMatcher.class);
     }
 
     private void install(Class<? extends Matcher> clazz) {

@@ -299,11 +299,19 @@ abstract class AbstractFingerprintMatcher extends Matcher {
         }
     }
 
-    private static class ScoreMatchComparator implements Comparator<ScoredMatch> {
+    protected static class ScoreMatchComparator implements Comparator<ScoredMatch> {
 
         @Override
         public int compare(ScoredMatch o1, ScoredMatch o2) {
             return -Double.compare(o1.score, o2.score);
+        }
+    }
+
+    protected static class CostMatchComparator implements Comparator<ScoredMatch> {
+
+        @Override
+        public int compare(ScoredMatch o1, ScoredMatch o2) {
+            return Double.compare(o1.score, o2.score);
         }
     }
 
