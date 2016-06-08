@@ -19,7 +19,8 @@ import java.util.Map;
 /**
  * Created by Geoff on 27/05/2016.
  */
-@Register(id = "java-jdt-gt", accept = "\\.java$" )
+//@Register(id = "java-jdt-gt-token", accept = "\\.java$" )
+@Register(id = "java-jdt-gt-token")
 public class JdtTreeAndTokenGenerator extends TreeGenerator {
     private static boolean OPTIONS_INITIALISED = false;
 
@@ -34,6 +35,20 @@ public class JdtTreeAndTokenGenerator extends TreeGenerator {
             }
             OPTIONS_INITIALISED = true;
         }
+    }
+
+
+    private boolean simplify;
+
+
+    public JdtTreeAndTokenGenerator() {
+        super();
+        simplify = SIMPLIFY;
+    }
+
+    public JdtTreeAndTokenGenerator(boolean simplify) {
+        super();
+        this.simplify = simplify;
     }
 
 
