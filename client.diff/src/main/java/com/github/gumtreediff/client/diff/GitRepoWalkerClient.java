@@ -25,6 +25,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,6 +40,7 @@ public class GitRepoWalkerClient extends Client {
     public static class Options implements Option.Context {
         protected String branch = "master";
         protected String matcher = "gumtree";
+        protected String generator = "java-jdt-gt";
         protected String jsonOutPath = null;
         protected String repoPath = "";
 
@@ -49,6 +51,12 @@ public class GitRepoWalkerClient extends Client {
                         @Override
                         protected void process(String name, String[] args) {
                             matcher = args[0];
+                        }
+                    },
+                    new Option("-g", "Preferred generator to use (can be used more than once).", 1) {
+                        @Override
+                        protected void process(String name, String[] args) {
+                            generator = args[0];
                         }
                     },
                     new Option("-branch", "Git branch to start from (default=master).", 1) {
@@ -191,20 +199,36 @@ public class GitRepoWalkerClient extends Client {
     }
 
 
+    protected TreeContext createTree(Reader content) {
+        if (opts.generator.equals("java-jdt-gt-token") || opts.generator.equals("java-jdt-gt-token-simplify")) {
+            boolean simplify = opts.generator.equals("java-jdt-gt-token-simplify");
+            JdtTreeAndTokenGenerator gen = new JdtTreeAndTokenGenerator(simplify);
+            try {
+                return gen.generate(content);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+        else {
+            // generator name: "java-jdt-gt"
+
+            JdtTreeGenerator gen = new JdtTreeGenerator();
+            try {
+                return gen.generate(content);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+    }
+
 
     protected DiffResults diff(String contentA, String contentB) {
         Reader rA = new StringReader(contentA);
         Reader rB = new StringReader(contentB);
-        JdtTreeAndTokenGenerator gen = new JdtTreeAndTokenGenerator();
-        TreeContext tA = null;
-        TreeContext tB = null;
-        try {
-            tA = gen.generate(rA);
-            tB = gen.generate(rB);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
+        TreeContext tA = createTree(rA);
+        TreeContext tB = createTree(rB);
         tA.validate();
         tB.validate();
         long t1 = System.nanoTime();
