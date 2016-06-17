@@ -12,6 +12,10 @@ public class FingerprintMatchHelper {
     public FeatureVectorTable fv;
 
     public FingerprintMatchHelper(ITree a, ITree b) {
+        this(a, b, 1.0, 0.0);
+    }
+
+    public FingerprintMatchHelper(ITree a, ITree b, double nonLocalityScaling, double nonLocalityBalanceExp) {
         mappingA = new FGPNode.NodeMapping();
         mappingB = new FGPNode.NodeMapping();
         fgpTreeA = new FGPNode(a, mappingA);
@@ -20,7 +24,7 @@ public class FingerprintMatchHelper {
         fgpTreeA.initDistFromRoot();
         fgpTreeB.initDistFromRoot();
 
-        fv = new FeatureVectorTable();
+        fv = new FeatureVectorTable(nonLocalityScaling, nonLocalityBalanceExp);
         fv.addTree(fgpTreeA);
         fv.addTree(fgpTreeB);
     }

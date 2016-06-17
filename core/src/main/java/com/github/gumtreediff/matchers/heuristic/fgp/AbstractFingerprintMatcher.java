@@ -17,24 +17,17 @@ import java.util.*;
 abstract class AbstractFingerprintMatcher extends Matcher {
     private static int SIZE_THRESHOLD = 500000;
 
+
     protected static double SIM_THRESHOLD;
 
 
 
     static {
         String simThresh = "0.3";
-        Map<String, String> env = System.getenv();
-        Object simThreshVal = env.get("FGSIM");
-        if (simThreshVal != null) {
-            simThresh = (String) simThreshVal;
-        }
         try {
-            SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.fg.sim", simThresh));
+            SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.fg.sim", "0.3"));
         } catch (NumberFormatException e) {
             SIM_THRESHOLD = 0.3;
-        }
-        if (simThreshVal != null) {
-            System.err.println("Setting SIM_THRESHOLD from FGSIM to " + SIM_THRESHOLD);
         }
     }
 
@@ -46,7 +39,7 @@ abstract class AbstractFingerprintMatcher extends Matcher {
 
 
 
-    protected void topDownMatch(FGPNode treeA, FGPNode treeB, int minDepth) {
+    protected void findExactSubtreeMatches(FGPNode treeA, FGPNode treeB, int minDepth) {
         DepthNodeQueue depthQA = new DepthNodeQueue(treeA);
         DepthNodeQueue depthQB = new DepthNodeQueue(treeB);
 

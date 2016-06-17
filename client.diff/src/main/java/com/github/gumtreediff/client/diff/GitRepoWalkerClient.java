@@ -8,6 +8,7 @@ import com.github.gumtreediff.client.Register;
 import com.github.gumtreediff.gen.TreeGenerator;
 import com.github.gumtreediff.gen.jdt.JdtTreeAndTokenGenerator;
 import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
+import com.github.gumtreediff.matchers.AbstractMatchStats;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.matchers.Matchers;
@@ -43,6 +44,7 @@ public class GitRepoWalkerClient extends Client {
         protected String generator = "java-jdt-gt";
         protected String jsonOutPath = null;
         protected String repoPath = "";
+        protected boolean gatherMatchStats = false;
 
         @Override
         public Option[] values() {
@@ -69,6 +71,12 @@ public class GitRepoWalkerClient extends Client {
                         @Override
                         protected void process(String name, String[] args) {
                             jsonOutPath = args[0];
+                        }
+                    },
+                    new Option("-matchstats", "Gather match score statistics") {
+                        @Override
+                        protected void process(String name, String[] args) {
+                            gatherMatchStats = true;
                         }
                     },
                     new Option.Help(this) {
@@ -290,6 +298,11 @@ public class GitRepoWalkerClient extends Client {
                                     jsonOut.name("n_moves").value(dres.getNumMoves());
                                     jsonOut.name("n_updates").value(dres.getNumUpdates());
                                     jsonOut.name("match_time").value(dres.getMatchTime());
+                                    AbstractMatchStats matchStats = dres.getMapping().getMatchStats();
+                                    if (matchStats != null && opts.gatherMatchStats) {
+                                        jsonOut.name("match_stats");
+                                        matchStats.asJson(jsonOut);
+                                    }
 
                                     jsonOut.endObject();
                                 }

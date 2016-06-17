@@ -1,8 +1,11 @@
 package com.github.gumtreediff.matchers.heuristic.fgp;
 
+import com.github.gumtreediff.matchers.AbstractMatchStats;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.tree.ITree;
+import com.google.gson.stream.JsonWriter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -15,6 +18,49 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
     private static int SIZE_THRESHOLD = 500000;
 
 
+    private static class CtxFingerprintMatchStats extends AbstractMatchStats {
+        ArrayList<Double> scoreDeltas = new ArrayList<>();
+
+        @Override
+        public void asJson(JsonWriter jsonOut) throws IOException {
+            jsonOut.beginObject();
+
+            jsonOut.name("score_relative_deltas").beginArray();
+            for (double deltaScore: scoreDeltas) {
+                jsonOut.value(deltaScore);
+            }
+            jsonOut.endArray();
+
+            jsonOut.endObject();
+        }
+
+        @Override
+        public String toString() {
+            if (size() == 0) {
+                return "";
+            }
+            else {
+                double min = scoreDeltas.get(0);
+                double max = scoreDeltas.get(0);
+                for (double deltaScore: scoreDeltas) {
+                    min = Math.min(min, deltaScore);
+                    max = Math.max(max, deltaScore);
+                }
+                return "Score deltas: min=" + min + ", max=" + max;
+            }
+        }
+
+
+        void add(double deltaScore) {
+            scoreDeltas.add(deltaScore);
+        }
+
+        int size() {
+            return scoreDeltas.size();
+        }
+    }
+
+
 
 
     public AbstractSimpleCtxFingerprintMatcher(ITree src, ITree dst, MappingStore store) {
@@ -22,7 +68,7 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
     }
 
 
-    protected void bottomUpMatch(FingerprintMatchHelper matchHelper, ScoredNodeMapping mappingScorer, FGPNode treeA, FGPNode treeB) {
+    protected void findFuzzyMatches(FingerprintMatchHelper matchHelper, ScoredNodeMapping mappingScorer, FGPNode treeA, FGPNode treeB) {
         long t1 = System.nanoTime();
         ArrayList<FGPNode> nodesA = nodesInUnmatchedSubtrees(treeA, BOTTOM_UP_HEIGHT_THRESHOLD);
         ArrayList<FGPNode> nodesB = nodesInUnmatchedSubtrees(treeB, BOTTOM_UP_HEIGHT_THRESHOLD);
@@ -61,6 +107,10 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
 
         long t4 = System.nanoTime();
 
+        double prevScore = Double.MIN_VALUE;
+
+        CtxFingerprintMatchStats matchStats = new CtxFingerprintMatchStats();
+
         while (!matchesByUpperBoundHeap.isEmpty() || !matchesByScoreHeap.isEmpty()) {
             // Remove any matches from `matchesByScoreHeap` is greater than the highest upper bound available
             // as determined by the entry at the head of `matchesByUpperBoundHeap`, since no match can be
@@ -68,6 +118,15 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
             while (!matchesByScoreHeap.isEmpty() &&
                     (matchesByUpperBoundHeap.isEmpty() || matchesByScoreHeap.peek().score > matchesByUpperBoundHeap.peek().score)) {
                 ScoredMatch potentialMatch = matchesByScoreHeap.poll();
+                if (prevScore > Double.MIN_VALUE) {
+                    double absDelta = prevScore - potentialMatch.score;
+                    double maxScore = prevScore;
+                    double relDelta = absDelta / maxScore;
+                    matchStats.add(relDelta);
+                }
+
+                prevScore = potentialMatch.score;
+
                 if (!potentialMatch.a.matched && !potentialMatch.b.matched &&
                         potentialMatch.a.node.getType() == potentialMatch.b.node.getType()) {
                     potentialMatch.a.matched = potentialMatch.b.matched = true;
@@ -91,6 +150,10 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
                     }
                 }
             }
+        }
+
+        if (matchStats.size() > 0) {
+            mappings.setMatchStats(matchStats);
         }
 
         if (!matchesByUpperBoundHeap.isEmpty()) {
@@ -140,10 +203,10 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
             }
 
 //            if (costAfter < costBefore) {
-//                System.err.println("++++ bottomUpMatch: Randomisation changed cost from " + stateBefore + " to " + stateAfter);
+//                System.err.println("++++ findFuzzyMatches: Randomisation changed cost from " + stateBefore + " to " + stateAfter);
 //            }
 //            else {
-//                System.err.println("---- bottomUpMatch: Randomisation left cost unchanged");
+//                System.err.println("---- findFuzzyMatches: Randomisation left cost unchanged");
 //            }
         }
 
@@ -157,7 +220,7 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
         double chooseBestMatchesTime = (t5 - t4) * 1.0e-9;
         double sortBestMatchesTime = (t6 - t5) * 1.0e-9;
         double mappingTime = (t7 - t6) * 1.0e-9;
-//        System.err.println("bottomUpMatch(): " + nodesA.size() + " x " + nodesB.size() + ", gather time=" + gatherTime + "s, score u-b time=" + scoreUpperBoundTime + "s, heap time=" + heapTime + "s, choose best matches time=" + chooseBestMatchesTime + "s, sort best matches time=" + sortBestMatchesTime + "s, mapping time=" + mappingTime + "s");
+//        System.err.println("findFuzzyMatches(): " + nodesA.size() + " x " + nodesB.size() + ", gather time=" + gatherTime + "s, score u-b time=" + scoreUpperBoundTime + "s, heap time=" + heapTime + "s, choose best matches time=" + chooseBestMatchesTime + "s, sort best matches time=" + sortBestMatchesTime + "s, mapping time=" + mappingTime + "s");
     }
 
 }

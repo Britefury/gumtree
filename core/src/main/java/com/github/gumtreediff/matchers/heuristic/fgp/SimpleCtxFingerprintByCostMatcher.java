@@ -5,7 +5,6 @@ import com.github.gumtreediff.matchers.Register;
 import com.github.gumtreediff.tree.ITree;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.PriorityQueue;
 
 /**
@@ -146,10 +145,10 @@ public class SimpleCtxFingerprintByCostMatcher extends AbstractFingerprintMatche
             }
 
 //            if (costAfter < costBefore) {
-//                System.err.println("++++ bottomUpMatch: Randomisation changed cost from " + stateBefore + " to " + stateAfter);
+//                System.err.println("++++ findFuzzyMatches: Randomisation changed cost from " + stateBefore + " to " + stateAfter);
 //            }
 //            else {
-//                System.err.println("---- bottomUpMatch: Randomisation left cost unchanged");
+//                System.err.println("---- findFuzzyMatches: Randomisation left cost unchanged");
 //            }
         }
 
@@ -163,7 +162,7 @@ public class SimpleCtxFingerprintByCostMatcher extends AbstractFingerprintMatche
         double chooseBestMatchesTime = (t5 - t4) * 1.0e-9;
         double sortBestMatchesTime = (t6 - t5) * 1.0e-9;
         double mappingTime = (t7 - t6) * 1.0e-9;
-//        System.err.println("bottomUpMatch(): " + nodesA.size() + " x " + nodesB.size() + ", gather time=" + gatherTime + "s, score u-b time=" + scoreUpperBoundTime + "s, heap time=" + heapTime + "s, choose best matches time=" + chooseBestMatchesTime + "s, sort best matches time=" + sortBestMatchesTime + "s, mapping time=" + mappingTime + "s");
+//        System.err.println("findFuzzyMatches(): " + nodesA.size() + " x " + nodesB.size() + ", gather time=" + gatherTime + "s, score u-b time=" + scoreUpperBoundTime + "s, heap time=" + heapTime + "s, choose best matches time=" + chooseBestMatchesTime + "s, sort best matches time=" + sortBestMatchesTime + "s, mapping time=" + mappingTime + "s");
     }
 
 
@@ -179,7 +178,7 @@ public class SimpleCtxFingerprintByCostMatcher extends AbstractFingerprintMatche
         long t2 = System.nanoTime();
         double fgTime = (t2 - t1) * 1.0e-9;
 
-        topDownMatch(matchHelper.fgpTreeA, matchHelper.fgpTreeB, 1);
+        findExactSubtreeMatches(matchHelper.fgpTreeA, matchHelper.fgpTreeB, 1);
 
 //        int nTopDown = mappings.asSet().size();
 

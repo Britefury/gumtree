@@ -25,7 +25,7 @@ public class SimpleCtxFingerprintMatcherWithRandomisation extends AbstractSimple
         long t2 = System.nanoTime();
         double fgTime = (t2 - t1) * 1.0e-9;
 
-        topDownMatch(matchHelper.fgpTreeA, matchHelper.fgpTreeB, 0);
+        findExactSubtreeMatches(matchHelper.fgpTreeA, matchHelper.fgpTreeB, 0);
 
 //        int nTopDown = mappings.asSet().size();
 
@@ -33,7 +33,7 @@ public class SimpleCtxFingerprintMatcherWithRandomisation extends AbstractSimple
         double topDownTime = (t3 - t2) * 1.0e-9;
 
         ScoredNodeMapping mappingScorer = new ScoredNodeMapping(matchHelper.fgpTreeA, matchHelper.fgpTreeB, matchHelper);
-        bottomUpMatch(matchHelper, mappingScorer, matchHelper.fgpTreeA, matchHelper.fgpTreeB);
+        findFuzzyMatches(matchHelper, mappingScorer, matchHelper.fgpTreeA, matchHelper.fgpTreeB);
 
         long t4 = System.nanoTime();
         double bottomUpTime = (t4 - t3) * 1.0e-9;

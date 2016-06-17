@@ -32,6 +32,7 @@ public class MappingStore implements Iterable<Mapping> {
 
     private Map<ITree, ITree> srcToDst;
     private Map<ITree, ITree> dstToSrc;
+    private AbstractMatchStats matchStats = null;
 
     public MappingStore(Set<Mapping> mappings) {
         this();
@@ -115,6 +116,14 @@ public class MappingStore implements Iterable<Mapping> {
 
     public int size() {
         return srcToDst.size();
+    }
+
+    public void setMatchStats(AbstractMatchStats matchStats) {
+        this.matchStats = matchStats;
+    }
+
+    public AbstractMatchStats getMatchStats() {
+        return matchStats;
     }
 
     @Override

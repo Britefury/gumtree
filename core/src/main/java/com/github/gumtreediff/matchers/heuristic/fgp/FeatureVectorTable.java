@@ -11,9 +11,19 @@ import java.util.Set;
  * Created by Geoff on 06/04/2016.
  */
 public class FeatureVectorTable {
+    double nonLocalityScaling =1.0, nonLocalityBalanceExp =0.0;
     FingerprintTable shapeFingerprints = new FingerprintTable();
     FingerprintTable contentFingerprints = new FingerprintTable();
     ArrayList<FeatureVector> featsByContentFGIndex = new ArrayList<>();
+
+
+    public FeatureVectorTable() {
+    }
+
+    public FeatureVectorTable(double nonLocalityScaling, double nonLocalityBalanceExp) {
+        this.nonLocalityScaling = nonLocalityScaling;
+        this.nonLocalityBalanceExp = nonLocalityBalanceExp;
+    }
 
 
     public void addTree(FGPNode tree) {
@@ -61,13 +71,14 @@ public class FeatureVectorTable {
         // Compute node feature vectors
         int contentFg = node.getContentFingerprintIndex();
         FeatureVector feats = featsByContentFGIndex.get(contentFg);
+        double nonLocalityScaleFactor = Math.pow(1.0 / node.children.length, nonLocalityBalanceExp) * nonLocalityScaling;
         if (feats == null) {
             feats = new FeatureVector();
 //            int shapeFG = node.getShapeFingerprintIndex();
             feats.set(contentFg, 1);
 
             for (FGPNode child: node.children) {
-                feats = feats.add(child.nodeFeatures);
+                feats = feats.add(child.nodeFeatures.scale(nonLocalityScaleFactor));
             }
             featsByContentFGIndex.set(contentFg, feats);
         }
@@ -81,14 +92,17 @@ public class FeatureVectorTable {
         node.rightTree = rightTree;
         node.parentContainmentFeatures = parentContainmentFeatures;
 
+        int leftSiblingSize = 0, rightSiblingSize = node.subtreeSize - 1;
         for (FGPNode child: node.children) {
+            rightSiblingSize -= child.subtreeSize;
             FeatureVector childContainment = null;
             if (parentContainmentFeatures != null) {
                 childContainment = node.nodeFeatures.sub(child.nodeFeatures);
             }
-            buildNodeFeaturesTopDown(child, leftTree + child.leftSiblingsFeats.getSum(),
-                                     rightTree + child.rightSiblingsFeats.getSum(),
+            buildNodeFeaturesTopDown(child, leftTree + leftSiblingSize,
+                                     rightTree + rightSiblingSize,
                                      childContainment);
+            leftSiblingSize += child.subtreeSize;
         }
     }
 

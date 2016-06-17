@@ -3,6 +3,7 @@ package com.github.gumtreediff.test_samples;
 import com.github.gumtreediff.actions.ActionGenerator;
 import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
+import com.github.gumtreediff.matchers.AbstractMatchStats;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.heuristic.fgp.SimpleCtxFingerprintMatcher;
 import com.github.gumtreediff.tree.ITree;
@@ -95,16 +96,18 @@ public class GitRepoWalker {
                             diffCount++;
                             int nA = dres.getSizeA(), nB = dres.getSizeB();
 //                            int nA = 0, nB = 0;
+                            AbstractMatchStats matchStats = dres.mapping.getMatchStats();
+                            String stats = matchStats != null ? matchStats.toString() : "";
                             if (ctype == DiffEntry.ChangeType.RENAME) {
                                 System.out.println(diff.getOldPath() + " -> " + diff.getNewPath() + " [ " +
                                         parent.getId().getName() + " -> " + commit.getId().getName() +
                                         " ]: |A| = " + nA + ", |B| = " + nB + ", |matches| = " +
-                                        dres.mapping.size() + ", |actions| = " + dres.actions.size());
+                                        dres.mapping.size() + ", |actions| = " + dres.actions.size() + ", " + stats);
                             } else {
                                 System.out.println(diff.getOldPath() + " [ " +
                                         parent.getId().getName() + " -> " + commit.getId().getName() +
                                         " ]: |A| = " + nA + ", |B| = " + nB + ", |matches| = " +
-                                        dres.mapping.size() + ", |actions| = " + dres.actions.size());
+                                        dres.mapping.size() + ", |actions| = " + dres.actions.size() + ", " + stats);
                             }
                         }
                     }
@@ -120,7 +123,7 @@ public class GitRepoWalker {
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         Repository repository = null;
         try {
-            repository = builder.setGitDir(new File("/Users/Geoff/kcl/testrepos/BottomBar/.git/"))
+            repository = builder.setGitDir(new File("/Users/Geoff/kcl/testrepos/retrofit/.git/"))
                     .readEnvironment() // scan environment GIT_* variables
                     .findGitDir() // scan up the file system tree
                     .build();
