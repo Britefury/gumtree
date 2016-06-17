@@ -20,6 +20,7 @@ public class AncestryCtxFingerprintMatcher extends AbstractFingerprintMatcher {
     private static double LOCAL_SIM_THRESHOLD = 0.2;
     private static double NON_LOCALITY_SCALING = 1.0;
     private static double NON_LOCALITY_BALANCE_EXP = 0.0;
+    private static boolean GATHER_MATCH_STATS = false;
 
 
     static {
@@ -39,6 +40,12 @@ public class AncestryCtxFingerprintMatcher extends AbstractFingerprintMatcher {
             NON_LOCALITY_BALANCE_EXP = Double.parseDouble(System.getProperty("gumtree.match.fg.nonlocalbalanceexp", "0.0"));
         } catch (NumberFormatException e) {
             NON_LOCALITY_BALANCE_EXP = 0.0;
+        }
+
+        try {
+            GATHER_MATCH_STATS = Boolean.parseBoolean(System.getProperty("gumtree.match.gathermatchstats", "false"));
+        } catch (NumberFormatException e) {
+            GATHER_MATCH_STATS = false;
         }
     }
 
@@ -163,14 +170,17 @@ public class AncestryCtxFingerprintMatcher extends AbstractFingerprintMatcher {
             while (!matchesByScoreHeap.isEmpty() &&
                     (matchesByUpperBoundHeap.isEmpty() || matchesByScoreHeap.peek().score > matchesByUpperBoundHeap.peek().score)) {
                 ScoredMatch potentialMatch = matchesByScoreHeap.poll();
-                if (prevScore > Double.MIN_VALUE) {
-                    double absDelta = prevScore - potentialMatch.score;
-                    double maxScore = prevScore;
-                    double relDelta = absDelta / maxScore;
-                    matchStats.add(relDelta);
-                }
 
-                prevScore = potentialMatch.score;
+                if (GATHER_MATCH_STATS) {
+                    if (prevScore > Double.MIN_VALUE) {
+                        double absDelta = prevScore - potentialMatch.score;
+                        double maxScore = prevScore;
+                        double relDelta = absDelta / maxScore;
+                        matchStats.add(relDelta);
+                    }
+
+                    prevScore = potentialMatch.score;
+                }
 
                 if (!potentialMatch.a.matched && !potentialMatch.b.matched &&
                         potentialMatch.a.node.getType() == potentialMatch.b.node.getType()) {

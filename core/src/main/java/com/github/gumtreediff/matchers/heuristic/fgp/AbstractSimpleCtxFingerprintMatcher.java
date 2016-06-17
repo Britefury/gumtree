@@ -16,7 +16,16 @@ import java.util.PriorityQueue;
 public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFingerprintMatcher {
     private static int BOTTOM_UP_HEIGHT_THRESHOLD = 2;
     private static int SIZE_THRESHOLD = 500000;
+    private static boolean GATHER_MATCH_STATS = false;
 
+
+    static {
+        try {
+            GATHER_MATCH_STATS = Boolean.parseBoolean(System.getProperty("gumtree.match.gathermatchstats", "false"));
+        } catch (NumberFormatException e) {
+            GATHER_MATCH_STATS = false;
+        }
+    }
 
     private static class CtxFingerprintMatchStats extends AbstractMatchStats {
         ArrayList<Double> scoreDeltas = new ArrayList<>();
@@ -118,14 +127,16 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
             while (!matchesByScoreHeap.isEmpty() &&
                     (matchesByUpperBoundHeap.isEmpty() || matchesByScoreHeap.peek().score > matchesByUpperBoundHeap.peek().score)) {
                 ScoredMatch potentialMatch = matchesByScoreHeap.poll();
-                if (prevScore > Double.MIN_VALUE) {
-                    double absDelta = prevScore - potentialMatch.score;
-                    double maxScore = prevScore;
-                    double relDelta = absDelta / maxScore;
-                    matchStats.add(relDelta);
-                }
+                if (GATHER_MATCH_STATS) {
+                    if (prevScore > Double.MIN_VALUE) {
+                        double absDelta = prevScore - potentialMatch.score;
+                        double maxScore = prevScore;
+                        double relDelta = absDelta / maxScore;
+                        matchStats.add(relDelta);
+                    }
 
-                prevScore = potentialMatch.score;
+                    prevScore = potentialMatch.score;
+                }
 
                 if (!potentialMatch.a.matched && !potentialMatch.b.matched &&
                         potentialMatch.a.node.getType() == potentialMatch.b.node.getType()) {
