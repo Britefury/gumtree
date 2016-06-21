@@ -267,11 +267,11 @@ public class GitRepoWalkerClient extends Client {
                             String oldText = new String(oldLoader.getBytes(), "UTF-8");
                             String newText = new String(newLoader.getBytes(), "UTF-8");
                             DiffResults dres = null;
-                            try {
+//                            try {
                                 dres = diff(oldText, newText);
-                            }
-                            catch (Exception e) {
-                            }
+//                            }
+//                            catch (Exception e) {
+//                            }
                             if (dres != null) {
                                 diffCount++;
                                 int nA = dres.getSizeA(), nB = dres.getSizeB();
