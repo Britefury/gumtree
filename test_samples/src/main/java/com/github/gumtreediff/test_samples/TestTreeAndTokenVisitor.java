@@ -1,20 +1,13 @@
 package com.github.gumtreediff.test_samples;
 
-import com.github.gumtreediff.actions.ActionGenerator;
-import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.gen.jdt.JdtTreeAndTokenGenerator;
-import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
-import com.github.gumtreediff.matchers.MappingStore;
-import com.github.gumtreediff.matchers.heuristic.fgp.SimpleCtxFingerprintMatcher;
 import com.github.gumtreediff.tree.TreeContext;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
 /**
  * Created by Geoff on 31/05/2016.
