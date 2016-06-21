@@ -1,25 +1,22 @@
 package com.github.gumtreediff.matchers.heuristic.fgp;
 
-import org.omg.PortableInterceptor.INACTIVE;
-import org.omg.PortableInterceptor.Interceptor;
-
 import java.util.*;
 
 /**
  * Created by Geoff on 06/04/2016.
  */
-public class FeatureVector {
+public class NodeHistogram {
     private int indices[];
     private double values[];
     private double sum;
 
-    public FeatureVector() {
+    public NodeHistogram() {
         indices = new int[0];
         values = new double[0];
         sum = 0.0;
     }
 
-    public FeatureVector(FeatureVector b) {
+    public NodeHistogram(NodeHistogram b) {
         this.indices = new int[b.indices.length];
         this.values = new double[b.values.length];
         System.arraycopy(b.indices, 0, this.indices, 0, b.indices.length);
@@ -27,7 +24,7 @@ public class FeatureVector {
         this.sum = b.sum;
     }
 
-    public FeatureVector(List<Integer> indices, List<Double> values) {
+    public NodeHistogram(List<Integer> indices, List<Double> values) {
         if (indices.size() != values.size()) {
             throw new RuntimeException("indices.size() (" + indices.size() + ") !=, values.size() (" + values.size() + ")");
         }
@@ -40,7 +37,7 @@ public class FeatureVector {
         updateSum();
     }
 
-    public FeatureVector(Map<Integer, Double> hist) {
+    public NodeHistogram(Map<Integer, Double> hist) {
         ArrayList<Integer> indices = new ArrayList<>();
         indices.addAll(hist.keySet());
         this.indices = new int[indices.size()];
@@ -55,13 +52,13 @@ public class FeatureVector {
         updateSum();
     }
 
-    private FeatureVector(int indices[], double values[]) {
+    private NodeHistogram(int indices[], double values[]) {
         this.indices = indices;
         this.values = values;
         updateSum();
     }
 
-    private FeatureVector(int indices[], double values[], double sum) {
+    private NodeHistogram(int indices[], double values[], double sum) {
         this.indices = indices;
         this.values = values;
         this.sum = sum;
@@ -124,7 +121,7 @@ public class FeatureVector {
      * @param b another feature vector
      * @return an iterable
      */
-    public Iterable<ValuePair> pairIter(FeatureVector b) {
+    public Iterable<ValuePair> pairIter(NodeHistogram b) {
         return new Iterable<ValuePair>() {
             @Override
             public Iterator<ValuePair> iterator() {
@@ -170,7 +167,7 @@ public class FeatureVector {
     }
 
 
-    public double jaccardSimilarity(FeatureVector b) {
+    public double jaccardSimilarity(NodeHistogram b) {
         double intersection = 0.0, union = 0.0;
         for (ValuePair iab: pairIter(b)) {
             intersection += Math.min(iab.a, iab.b);
@@ -188,7 +185,7 @@ public class FeatureVector {
     }
 
 
-    public double[] jaccardSimilarityParts(FeatureVector b) {
+    public double[] jaccardSimilarityParts(NodeHistogram b) {
         double intersection = 0.0, union = 0.0;
         for (ValuePair iab: pairIter(b)) {
             intersection += Math.min(iab.a, iab.b);
@@ -206,7 +203,7 @@ public class FeatureVector {
     }
 
 
-    public double jaccardSimilarityUpperBound(FeatureVector b) {
+    public double jaccardSimilarityUpperBound(NodeHistogram b) {
         double intersection = Math.min(sum, b.sum);
         double union = Math.max(sum, b.sum);
         if (union == 0.0) {
@@ -221,7 +218,7 @@ public class FeatureVector {
     }
 
 
-    public double cost(FeatureVector b) {
+    public double cost(NodeHistogram b) {
         double cost = 0.0;
         for (ValuePair iab: pairIter(b)) {
             double c = Math.max(iab.a, iab.b) - Math.min(iab.a, iab.b);
@@ -230,21 +227,21 @@ public class FeatureVector {
         return cost;
     }
 
-    public double costLowerBound(FeatureVector b) {
+    public double costLowerBound(NodeHistogram b) {
         return Math.max(sum, b.sum) - Math.min(sum, b.sum);
     }
 
-    public FeatureVector add(FeatureVector b) {
+    public NodeHistogram add(NodeHistogram b) {
         ArrayList<Integer> ndx = new ArrayList<>();
         ArrayList<Double> val = new ArrayList<>();
         for (ValuePair iab: pairIter(b)) {
             ndx.add(iab.index);
             val.add(iab.a + iab.b);
         }
-        return new FeatureVector(ndx, val);
+        return new NodeHistogram(ndx, val);
     }
 
-    public FeatureVector sub(FeatureVector b) {
+    public NodeHistogram sub(NodeHistogram b) {
         ArrayList<Integer> ndx = new ArrayList<>();
         ArrayList<Double> val = new ArrayList<>();
         for (ValuePair iab: pairIter(b)) {
@@ -254,10 +251,10 @@ public class FeatureVector {
                 val.add(v);
             }
         }
-        return new FeatureVector(ndx, val);
+        return new NodeHistogram(ndx, val);
     }
 
-    public FeatureVector scale(FeatureVector b) {
+    public NodeHistogram scale(NodeHistogram b) {
         ArrayList<Integer> ndx = new ArrayList<>();
         ArrayList<Double> val = new ArrayList<>();
         for (ValuePair iab: pairIter(b)) {
@@ -267,23 +264,23 @@ public class FeatureVector {
                 val.add(v);
             }
         }
-        return new FeatureVector(ndx, val);
+        return new NodeHistogram(ndx, val);
     }
 
-    public FeatureVector scale(double b) {
+    public NodeHistogram scale(double b) {
         if (b == 0.0) {
-            return new FeatureVector();
+            return new NodeHistogram();
         }
         else {
             double val[] = new double[values.length];
             for (int i = 0; i < values.length; i++) {
                 val[i] = this.values[i] * b;
             }
-            return new FeatureVector(indices, val, sum * b);
+            return new NodeHistogram(indices, val, sum * b);
         }
     }
 
-    public FeatureVector intersect(FeatureVector b) {
+    public NodeHistogram intersect(NodeHistogram b) {
         ArrayList<Integer> ndx = new ArrayList<>();
         ArrayList<Double> val = new ArrayList<>();
         for (ValuePair iab: pairIter(b)) {
@@ -293,10 +290,10 @@ public class FeatureVector {
                 val.add(v);
             }
         }
-        return new FeatureVector(ndx, val);
+        return new NodeHistogram(ndx, val);
     }
 
-    public FeatureVector union(FeatureVector b) {
+    public NodeHistogram union(NodeHistogram b) {
         ArrayList<Integer> ndx = new ArrayList<>();
         ArrayList<Double> val = new ArrayList<>();
         for (ValuePair iab: pairIter(b)) {
@@ -306,29 +303,29 @@ public class FeatureVector {
                 val.add(v);
             }
         }
-        return new FeatureVector(ndx, val);
+        return new NodeHistogram(ndx, val);
     }
 
-    public FeatureVector abs() {
+    public NodeHistogram abs() {
         double val[] = new double[values.length];
         for (int i = 0; i < values.length; i++) {
             val[i] = Math.abs(this.values[i]);
         }
-        return new FeatureVector(indices, val);
+        return new NodeHistogram(indices, val);
     }
 
-    public FeatureVector negated() {
+    public NodeHistogram negated() {
         double val[] = new double[values.length];
         for (int i = 0; i < values.length; i++) {
             val[i] = -this.values[i];
         }
-        return new FeatureVector(indices, val);
+        return new NodeHistogram(indices, val);
     }
 
 
     public boolean equals(Object x) {
-        if (x instanceof FeatureVector) {
-            FeatureVector fx = (FeatureVector)x;
+        if (x instanceof NodeHistogram) {
+            NodeHistogram fx = (NodeHistogram)x;
             return Arrays.equals(indices, fx.indices) && Arrays.equals(values, fx.values);
         }
         else {
@@ -343,7 +340,7 @@ public class FeatureVector {
 
     public String toString() {
         StringBuilder x = new StringBuilder();
-        x.append("FeatureVector(");
+        x.append("NodeHistogram(");
         for (int i = 0; i < indices.length; i++) {
             x.append(indices[i]);
             x.append(":");

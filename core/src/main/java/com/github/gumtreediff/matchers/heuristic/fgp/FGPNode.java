@@ -43,8 +43,8 @@ public class FGPNode {
 
     private String shapeSha, contentSha;
     private int shapeFGIndex = -1, contentFGIndex = -1;
-    protected FeatureVector nodeFeatures = null;
-    protected FeatureVector leftSiblingsFeats = null, rightSiblingsFeats = null, parentContainmentFeatures = null;
+    protected NodeHistogram nodeFeatures = null;
+    protected NodeHistogram leftSiblingsFeats = null, rightSiblingsFeats = null, parentContainmentFeatures = null;
     protected double leftTree, rightTree;
 
     protected int matchId = -1;

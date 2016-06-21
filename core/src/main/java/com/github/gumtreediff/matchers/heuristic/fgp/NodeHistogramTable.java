@@ -10,17 +10,17 @@ import java.util.Set;
 /**
  * Created by Geoff on 06/04/2016.
  */
-public class FeatureVectorTable {
+public class NodeHistogramTable {
     double nonLocalityScaling =1.0, nonLocalityBalanceExp =0.0;
     FingerprintTable shapeFingerprints = new FingerprintTable();
     FingerprintTable contentFingerprints = new FingerprintTable();
-    ArrayList<FeatureVector> featsByContentFGIndex = new ArrayList<>();
+    ArrayList<NodeHistogram> featsByContentFGIndex = new ArrayList<>();
 
 
-    public FeatureVectorTable() {
+    public NodeHistogramTable() {
     }
 
-    public FeatureVectorTable(double nonLocalityScaling, double nonLocalityBalanceExp) {
+    public NodeHistogramTable(double nonLocalityScaling, double nonLocalityBalanceExp) {
         this.nonLocalityScaling = nonLocalityScaling;
         this.nonLocalityBalanceExp = nonLocalityBalanceExp;
     }
@@ -34,13 +34,13 @@ public class FeatureVectorTable {
         }
 
         buildTreeFeaturesBottomUp(tree);
-//        buildNodeFeaturesTopDown(tree, 0.0, 0.0, new FeatureVector());
+//        buildNodeFeaturesTopDown(tree, 0.0, 0.0, new NodeHistogram());
         buildNodeFeaturesTopDown(tree, 0.0, 0.0, null);
     }
 
     private void buildTreeFeaturesBottomUp(FGPNode root) {
-        root.leftSiblingsFeats = new FeatureVector();
-        root.rightSiblingsFeats = new FeatureVector();
+        root.leftSiblingsFeats = new NodeHistogram();
+        root.rightSiblingsFeats = new NodeHistogram();
         buildNodeFeaturesBottomUp(root);
     }
 
@@ -52,14 +52,14 @@ public class FeatureVectorTable {
 
         // Compute cumulative features of children and set
         if (node.children.length > 0) {
-            FeatureVector cumulativeChildFeats[] = new FeatureVector[node.children.length + 1];
-            cumulativeChildFeats[0] = new FeatureVector();
+            NodeHistogram cumulativeChildFeats[] = new NodeHistogram[node.children.length + 1];
+            cumulativeChildFeats[0] = new NodeHistogram();
 
             for (int i = 0; i < node.children.length; i++) {
                 cumulativeChildFeats[i+1] = cumulativeChildFeats[i].add(node.children[i].nodeFeatures);
             }
 
-            FeatureVector last = cumulativeChildFeats[cumulativeChildFeats.length-1];
+            NodeHistogram last = cumulativeChildFeats[cumulativeChildFeats.length-1];
 
             for (int i = 0; i < node.children.length; i++) {
                 FGPNode child = node.children[i];
@@ -70,10 +70,10 @@ public class FeatureVectorTable {
 
         // Compute node feature vectors
         int contentFg = node.getContentFingerprintIndex();
-        FeatureVector feats = featsByContentFGIndex.get(contentFg);
+        NodeHistogram feats = featsByContentFGIndex.get(contentFg);
         double nonLocalityScaleFactor = Math.pow(1.0 / node.children.length, nonLocalityBalanceExp) * nonLocalityScaling;
         if (feats == null) {
-            feats = new FeatureVector();
+            feats = new NodeHistogram();
 //            int shapeFG = node.getShapeFingerprintIndex();
             feats.set(contentFg, 1);
 
@@ -87,7 +87,7 @@ public class FeatureVectorTable {
     }
 
     private void buildNodeFeaturesTopDown(FGPNode node, double leftTree, double rightTree,
-                                          FeatureVector parentContainmentFeatures) {
+                                          NodeHistogram parentContainmentFeatures) {
         node.leftTree = leftTree;
         node.rightTree = rightTree;
         node.parentContainmentFeatures = parentContainmentFeatures;
@@ -95,7 +95,7 @@ public class FeatureVectorTable {
         int leftSiblingSize = 0, rightSiblingSize = node.subtreeSize - 1;
         for (FGPNode child: node.children) {
             rightSiblingSize -= child.subtreeSize;
-            FeatureVector childContainment = null;
+            NodeHistogram childContainment = null;
             if (parentContainmentFeatures != null) {
                 childContainment = node.nodeFeatures.sub(child.nodeFeatures);
             }

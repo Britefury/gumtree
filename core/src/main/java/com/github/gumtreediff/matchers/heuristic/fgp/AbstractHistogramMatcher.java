@@ -3,18 +3,16 @@ package com.github.gumtreediff.matchers.heuristic.fgp;
 import com.github.gumtreediff.matchers.Mapping;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
-import com.github.gumtreediff.matchers.Register;
 import com.github.gumtreediff.matchers.optimal.zs.ZsMatcher;
 import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.tree.TreeUtils;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
  * Created by Geoff on 06/04/2016.
  */
-abstract class AbstractFingerprintMatcher extends Matcher {
+abstract class AbstractHistogramMatcher extends Matcher {
     private static int SIZE_THRESHOLD = 500000;
 
 
@@ -32,7 +30,7 @@ abstract class AbstractFingerprintMatcher extends Matcher {
     }
 
 
-    public AbstractFingerprintMatcher(ITree src, ITree dst, MappingStore store) {
+    public AbstractHistogramMatcher(ITree src, ITree dst, MappingStore store) {
         super(src, dst, store);
     }
 
@@ -98,7 +96,7 @@ abstract class AbstractFingerprintMatcher extends Matcher {
                     ArrayList<ScoredMatch> scoredMatches = new ArrayList<>();
                     for (FGPNode a: pair.nodesA) {
                         for (FGPNode b: pair.nodesB) {
-                            scoredMatches.add(new ScoredMatch(FeatureVectorTable.scoreMatch(a.parent, b.parent, null, null, null), a, b));
+                            scoredMatches.add(new ScoredMatch(NodeHistogramTable.scoreMatch(a.parent, b.parent, null, null, null), a, b));
                         }
                     }
                     scoredMatches.sort(new ScoreMatchComparator());
@@ -152,7 +150,7 @@ abstract class AbstractFingerprintMatcher extends Matcher {
                     ArrayList<ScoredMatch> scoredMatches = new ArrayList<>();
                     for (FGPNode a: pair.nodesA) {
                         for (FGPNode b: pair.nodesB) {
-                            scoredMatches.add(new ScoredMatch(FeatureVectorTable.scoreMatchContext(a, b), a, b));
+                            scoredMatches.add(new ScoredMatch(NodeHistogramTable.scoreMatchContext(a, b), a, b));
                         }
                     }
                     scoredMatches.sort(new ScoreMatchComparator());
@@ -204,7 +202,7 @@ abstract class AbstractFingerprintMatcher extends Matcher {
         return nodes;
     }
 
-    protected void lastChanceMatch(FingerprintMatchHelper matchHelper, ScoredNodeMapping mappingScorer, ITree src, ITree dst) {
+    protected void lastChanceMatch(FingerprintMatchHelper matchHelper, ITree src, ITree dst) {
         ITree cSrc = src.deepCopy();
         ITree cDst = dst.deepCopy();
         TreeUtils.removeMatched(cSrc);
@@ -229,12 +227,7 @@ abstract class AbstractFingerprintMatcher extends Matcher {
                     //System.err.println("Trying to map nodes with incompatible parents");
                     continue;
                 } else {
-                    if (mappingScorer != null) {
-                        mappingScorer.link(fgpLeft, fgpRight, false);
-                    }
-                    else {
-                        addMapping(left, right);
-                    }
+                    addMapping(left, right);
                     fgpLeft.matched = fgpRight.matched = true;
                 }
             }

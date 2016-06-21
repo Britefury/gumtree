@@ -9,7 +9,7 @@ import com.github.gumtreediff.tree.ITree;
 public class FingerprintMatchHelper {
     public FGPNode.NodeMapping mappingA, mappingB;
     public FGPNode fgpTreeA, fgpTreeB;
-    public FeatureVectorTable fv;
+    public NodeHistogramTable fv;
 
     public FingerprintMatchHelper(ITree a, ITree b) {
         this(a, b, 1.0, 0.0);
@@ -24,29 +24,29 @@ public class FingerprintMatchHelper {
         fgpTreeA.initDistFromRoot();
         fgpTreeB.initDistFromRoot();
 
-        fv = new FeatureVectorTable(nonLocalityScaling, nonLocalityBalanceExp);
+        fv = new NodeHistogramTable(nonLocalityScaling, nonLocalityBalanceExp);
         fv.addTree(fgpTreeA);
         fv.addTree(fgpTreeB);
     }
 
 
     public double scoreMatchContext(ITree a, ITree b) {
-        return FeatureVectorTable.scoreMatchContext(mappingA.get(a), mappingB.get(b));
+        return NodeHistogramTable.scoreMatchContext(mappingA.get(a), mappingB.get(b));
     }
 
     public double scoreMatch(ITree a, ITree b) {
-        return FeatureVectorTable.scoreMatch(mappingA.get(a), mappingB.get(b), null, null, null);
+        return NodeHistogramTable.scoreMatch(mappingA.get(a), mappingB.get(b), null, null, null);
     }
 
     public double scoreMatch(ITree a, ITree b, MappingStore mappings) {
-        return FeatureVectorTable.scoreMatch(mappingA.get(a), mappingB.get(b), mappingA, mappingB, mappings);
+        return NodeHistogramTable.scoreMatch(mappingA.get(a), mappingB.get(b), mappingA, mappingB, mappings);
     }
 
     public void logMatch(ITree a, ITree b) {
-        FeatureVectorTable.logMatch(mappingA.get(a), mappingB.get(b), null, null, null);
+        NodeHistogramTable.logMatch(mappingA.get(a), mappingB.get(b), null, null, null);
     }
 
     public void logMatch(ITree a, ITree b, MappingStore mappings) {
-        FeatureVectorTable.logMatch(mappingA.get(a), mappingB.get(b), mappingA, mappingB, mappings);
+        NodeHistogramTable.logMatch(mappingA.get(a), mappingB.get(b), mappingA, mappingB, mappings);
     }
 }

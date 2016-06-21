@@ -2,30 +2,60 @@ package com.github.gumtreediff.matchers.heuristic.fgp;
 
 import com.github.gumtreediff.matchers.AbstractMatchStats;
 import com.github.gumtreediff.matchers.MappingStore;
+import com.github.gumtreediff.matchers.Register;
 import com.github.gumtreediff.tree.ITree;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.PriorityQueue;
 
 /**
  * Created by Geoff on 24/05/2016.
  */
-public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFingerprintMatcher {
+@Register(id = "fg-ctx")
+public class AncestryCtxHistogramMatcher extends AbstractHistogramMatcher {
     private static int BOTTOM_UP_HEIGHT_THRESHOLD = 2;
-    private static int SIZE_THRESHOLD = 500000;
+
+    private static double LOCAL_SIM_THRESHOLD = 0.2;
+    private static double NON_LOCALITY_SCALING = 1.0;
+    private static double NON_LOCALITY_BALANCE_EXP = 0.0;
+    private static double SIBLING_WEIGHT = 0.0;
     private static boolean GATHER_MATCH_STATS = false;
 
 
     static {
+        try {
+            LOCAL_SIM_THRESHOLD = Double.parseDouble(System.getProperty("gumtree.match.fg.local_sim", "0.2"));
+        } catch (NumberFormatException e) {
+            LOCAL_SIM_THRESHOLD = 0.2;
+        }
+
+        try {
+            NON_LOCALITY_SCALING = Double.parseDouble(System.getProperty("gumtree.match.fg.nonlocalscale", "1.0"));
+        } catch (NumberFormatException e) {
+            NON_LOCALITY_SCALING = 1.0;
+        }
+
+        try {
+            NON_LOCALITY_BALANCE_EXP = Double.parseDouble(System.getProperty("gumtree.match.fg.nonlocalbalanceexp", "0.0"));
+        } catch (NumberFormatException e) {
+            NON_LOCALITY_BALANCE_EXP = 0.0;
+        }
+
+        try {
+            SIBLING_WEIGHT = Double.parseDouble(System.getProperty("gumtree.match.fg.siblingweight", "0.0"));
+        } catch (NumberFormatException e) {
+            SIBLING_WEIGHT = 0.0;
+        }
+
         try {
             GATHER_MATCH_STATS = Boolean.parseBoolean(System.getProperty("gumtree.match.gathermatchstats", "false"));
         } catch (NumberFormatException e) {
             GATHER_MATCH_STATS = false;
         }
     }
+
 
     private static class CtxFingerprintMatchStats extends AbstractMatchStats {
         ArrayList<Double> scoreDeltas = new ArrayList<>();
@@ -69,28 +99,49 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
         }
     }
 
-
-
-
-    public AbstractSimpleCtxFingerprintMatcher(ITree src, ITree dst, MappingStore store) {
+    public AncestryCtxHistogramMatcher(ITree src, ITree dst, MappingStore store) {
         super(src, dst, store);
     }
 
+    @Override
+    public void match() {
+        long t1 = System.nanoTime();
 
-    protected void findFuzzyMatches(FingerprintMatchHelper matchHelper, ScoredNodeMapping mappingScorer, FGPNode treeA, FGPNode treeB) {
+        FingerprintMatchHelper matchHelper = new FingerprintMatchHelper(src, dst,
+                NON_LOCALITY_SCALING, NON_LOCALITY_BALANCE_EXP);
+
+        int nTA = matchHelper.fgpTreeA.subtreeSize;
+        int nTB = matchHelper.fgpTreeB.subtreeSize;
+
+        long t2 = System.nanoTime();
+        double fgTime = (t2 - t1) * 1.0e-9;
+
+        findExactSubtreeMatches(matchHelper.fgpTreeA, matchHelper.fgpTreeB, 1);
+
+//        int nTopDown = mappings.asSet().size();
+
+        long t3 = System.nanoTime();
+        double topDownTime = (t3 - t2) * 1.0e-9;
+
+        bottomUpMatch(matchHelper, matchHelper.fgpTreeA, matchHelper.fgpTreeB);
+
+        long t4 = System.nanoTime();
+        double bottomUpTime = (t4 - t3) * 1.0e-9;
+
+//        System.err.println("Fingerprint generation " + nTA + " x " + nTB + " nodes: " + fgTime + "s, top down " + topDownTime + "s, bottom up " + bottomUpTime + "s");
+    }
+
+
+
+    private void bottomUpMatch(FingerprintMatchHelper matchHelper, FGPNode treeA, FGPNode treeB) {
         long t1 = System.nanoTime();
         ArrayList<FGPNode> nodesA = nodesInUnmatchedSubtrees(treeA, BOTTOM_UP_HEIGHT_THRESHOLD);
         ArrayList<FGPNode> nodesB = nodesInUnmatchedSubtrees(treeB, BOTTOM_UP_HEIGHT_THRESHOLD);
 
-        if (mappingScorer != null) {
-            // Add the existing mappings as fixed
-            mappingScorer.addMappings(mappings, true);
-        }
 
+        AncestryMatchScoreCache matchTable = new AncestryMatchScoreCache(nodesA, nodesB,
+                SIBLING_WEIGHT);
 
-        // Get the unmached nodes in each side
-        ArrayList<FGPNode> unmatchedNodesA = nodesInUnmatchedSubtrees(treeA, -1);
-        ArrayList<FGPNode> unmatchedNodesB = nodesInUnmatchedSubtrees(treeB, -1);
 
 
         long t2 = System.nanoTime();
@@ -99,9 +150,10 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
         ArrayList<ScoredMatch> matchesByUpperBound = new ArrayList<>();
         for (FGPNode a: nodesA) {
             for (FGPNode b: nodesB) {
-                double scoreUpperBound = FeatureVectorTable.scoreMatchUpperBound(a, b);
-                if (scoreUpperBound > SIM_THRESHOLD) {
-                    matchesByUpperBound.add(new ScoredMatch(scoreUpperBound, a, b));
+                double localSimUpperBound = matchTable.localSimilarityUpperBound(a, b);
+                if (localSimUpperBound > LOCAL_SIM_THRESHOLD) {
+                    double ctxSimUpperBound = matchTable.inContextSimilarityUpperBound(a, b);
+                    matchesByUpperBound.add(new ScoredMatch(ctxSimUpperBound, a, b));
                 }
             }
         }
@@ -114,11 +166,10 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
 
         ArrayList<MatchByHeight> matchesByHeight = new ArrayList<>();
 
-        long t4 = System.nanoTime();
-
+        CtxFingerprintMatchStats matchStats = new CtxFingerprintMatchStats();
         double prevScore = Double.MIN_VALUE;
 
-        CtxFingerprintMatchStats matchStats = new CtxFingerprintMatchStats();
+        long t4 = System.nanoTime();
 
         while (!matchesByUpperBoundHeap.isEmpty() || !matchesByScoreHeap.isEmpty()) {
             // Remove any matches from `matchesByScoreHeap` is greater than the highest upper bound available
@@ -127,6 +178,7 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
             while (!matchesByScoreHeap.isEmpty() &&
                     (matchesByUpperBoundHeap.isEmpty() || matchesByScoreHeap.peek().score > matchesByUpperBoundHeap.peek().score)) {
                 ScoredMatch potentialMatch = matchesByScoreHeap.poll();
+
                 if (GATHER_MATCH_STATS) {
                     if (prevScore > Double.MIN_VALUE) {
                         double absDelta = prevScore - potentialMatch.score;
@@ -154,9 +206,10 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
                 ScoredMatch upperBound = matchesByUpperBoundHeap.poll();
                 if (!upperBound.a.matched && !upperBound.b.matched &&
                         upperBound.a.node.getType() == upperBound.b.node.getType()) {
-                    double score = FeatureVectorTable.scoreMatch(upperBound.a, upperBound.b, null, null, null);
-                    if (score >= SIM_THRESHOLD) {
-                        ScoredMatch scored = new ScoredMatch(score, upperBound.a, upperBound.b);
+                    double localSim = matchTable.localSimilarity(upperBound.a, upperBound.b);
+                    if (localSim >= LOCAL_SIM_THRESHOLD) {
+                        double contextSim = matchTable.inContextSimilarity(upperBound.a, upperBound.b);
+                        ScoredMatch scored = new ScoredMatch(contextSim, upperBound.a, upperBound.b);
                         matchesByScoreHeap.add(scored);
                     }
                 }
@@ -183,45 +236,11 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
         long t6 = System.nanoTime();
 
         for (MatchByHeight match: matchesByHeight) {
-            lastChanceMatch(matchHelper, mappingScorer, match.a.node, match.b.node);
-            if (mappingScorer != null) {
-                mappingScorer.link(match.a, match.b, false);
-            }
-            else {
-                addMapping(match.a.node, match.b.node);
-            }
+            lastChanceMatch(matchHelper, match.a.node, match.b.node);
+            addMapping(match.a.node, match.b.node);
         }
 
         long t7 = System.nanoTime();
-
-        if (mappingScorer != null) {
-            double costBefore = mappingScorer.getCost();
-            String stateBefore = mappingScorer.getCostState();
-
-            // Randomise the mapping between unfixed notes
-            mappingScorer.randomiseMapping(unmatchedNodesA, unmatchedNodesB, 15, 35);
-
-            double costAfter = mappingScorer.getCost();
-            String stateAfter = mappingScorer.getCostState();
-
-            // Copy over the randomised mappings
-            for (FGPNode a: unmatchedNodesA) {
-                ScoredNodeMapping.ScoredMapping mapping = mappingScorer.aIdToMapping[a.node.getId()];
-                if (mapping != null) {
-                    FGPNode b = mapping.b;
-                    addMapping(a.node, b.node);
-                }
-            }
-
-//            if (costAfter < costBefore) {
-//                System.err.println("++++ findFuzzyMatches: Randomisation changed cost from " + stateBefore + " to " + stateAfter);
-//            }
-//            else {
-//                System.err.println("---- findFuzzyMatches: Randomisation left cost unchanged");
-//            }
-        }
-
-
 
 
 
@@ -232,6 +251,4 @@ public abstract class AbstractSimpleCtxFingerprintMatcher extends AbstractFinger
         double sortBestMatchesTime = (t6 - t5) * 1.0e-9;
         double mappingTime = (t7 - t6) * 1.0e-9;
 //        System.err.println("findFuzzyMatches(): " + nodesA.size() + " x " + nodesB.size() + ", gather time=" + gatherTime + "s, score u-b time=" + scoreUpperBoundTime + "s, heap time=" + heapTime + "s, choose best matches time=" + chooseBestMatchesTime + "s, sort best matches time=" + sortBestMatchesTime + "s, mapping time=" + mappingTime + "s");
-    }
-
-}
+    }}
