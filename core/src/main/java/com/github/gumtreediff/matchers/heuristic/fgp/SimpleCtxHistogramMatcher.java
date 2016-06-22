@@ -13,7 +13,7 @@ import java.util.PriorityQueue;
 /**
  * Created by Geoff on 24/05/2016.
  */
-@Register(id = "fg")
+@Register(id = "hist-ctx")
 public class SimpleCtxHistogramMatcher extends AbstractHistogramMatcher {
     private static int BOTTOM_UP_HEIGHT_THRESHOLD = 2;
     private static int SIZE_THRESHOLD = 500000;

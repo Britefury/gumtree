@@ -13,7 +13,7 @@ import java.util.PriorityQueue;
 /**
  * Created by Geoff on 24/05/2016.
  */
-@Register(id = "fg-ctx")
+@Register(id = "hist-anc")
 public class AncestryCtxHistogramMatcher extends AbstractHistogramMatcher {
     private static int BOTTOM_UP_HEIGHT_THRESHOLD = 2;
 
