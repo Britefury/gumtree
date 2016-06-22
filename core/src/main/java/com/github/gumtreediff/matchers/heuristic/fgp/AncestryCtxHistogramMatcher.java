@@ -58,15 +58,15 @@ public class AncestryCtxHistogramMatcher extends AbstractHistogramMatcher {
 
 
     private static class CtxFingerprintMatchStats extends AbstractMatchStats {
-        ArrayList<Double> scoreDeltas = new ArrayList<>();
+        ArrayList<Double> scores = new ArrayList<>();
 
         @Override
         public void asJson(JsonWriter jsonOut) throws IOException {
             jsonOut.beginObject();
 
-            jsonOut.name("score_relative_deltas").beginArray();
-            for (double deltaScore: scoreDeltas) {
-                jsonOut.value(deltaScore);
+            jsonOut.name("scores").beginArray();
+            for (double score: scores) {
+                jsonOut.value(score);
             }
             jsonOut.endArray();
 
@@ -79,23 +79,23 @@ public class AncestryCtxHistogramMatcher extends AbstractHistogramMatcher {
                 return "";
             }
             else {
-                double min = scoreDeltas.get(0);
-                double max = scoreDeltas.get(0);
-                for (double deltaScore: scoreDeltas) {
-                    min = Math.min(min, deltaScore);
-                    max = Math.max(max, deltaScore);
+                double min = scores.get(0);
+                double max = scores.get(0);
+                for (double score: scores) {
+                    min = Math.min(min, score);
+                    max = Math.max(max, score);
                 }
-                return "Score deltas: min=" + min + ", max=" + max;
+                return "Scores: min=" + min + ", max=" + max;
             }
         }
 
 
-        void add(double deltaScore) {
-            scoreDeltas.add(deltaScore);
+        void add(double score) {
+            scores.add(score);
         }
 
         int size() {
-            return scoreDeltas.size();
+            return scores.size();
         }
     }
 
@@ -167,7 +167,6 @@ public class AncestryCtxHistogramMatcher extends AbstractHistogramMatcher {
         ArrayList<MatchByHeight> matchesByHeight = new ArrayList<>();
 
         CtxFingerprintMatchStats matchStats = new CtxFingerprintMatchStats();
-        double prevScore = Double.MIN_VALUE;
 
         long t4 = System.nanoTime();
 
@@ -180,14 +179,7 @@ public class AncestryCtxHistogramMatcher extends AbstractHistogramMatcher {
                 ScoredMatch potentialMatch = matchesByScoreHeap.poll();
 
                 if (GATHER_MATCH_STATS) {
-                    if (prevScore > Double.MIN_VALUE) {
-                        double absDelta = prevScore - potentialMatch.score;
-                        double maxScore = prevScore;
-                        double relDelta = absDelta / maxScore;
-                        matchStats.add(relDelta);
-                    }
-
-                    prevScore = potentialMatch.score;
+                    matchStats.add(potentialMatch.score);
                 }
 
                 if (!potentialMatch.a.matched && !potentialMatch.b.matched &&
